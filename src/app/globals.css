@@ -54,6 +54,8 @@ a { color: inherit; text-decoration: none; }
 .chd { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
 .chd .note { margin-left: auto; font-size: 12px; color: var(--i4); font-weight: 500; }
 .field { background: #f6f4f2; border: 1px solid var(--bd); border-radius: 8px; padding: 11px 14px; }
+.field:focus-within { border-color: var(--b); }
+.field input:focus { outline: none; }
 .field .lb { font-size: 10px; color: var(--i4); }
 .field .vl { font-size: 13px; font-weight: 500; }
 .badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
