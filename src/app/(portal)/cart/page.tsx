@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { CreateOrder } from "@/components/actions";
+import { CreateOrder, RemoveFromCart } from "@/components/actions";
 
 export default async function CartPage() {
   const session = await getSession();
@@ -38,6 +38,7 @@ export default async function CartPage() {
                   <div className="tnum" style={{ fontWeight: 700 }}>{i.stone.totalPrice ? `$${i.stone.totalPrice}` : "—"}</div>
                   <div style={{ fontSize: 11, color: "var(--i4)" }}>indicative</div>
                 </div>
+                <RemoveFromCart stoneId={i.stone.id} />
               </div>
             ))}
           </div>

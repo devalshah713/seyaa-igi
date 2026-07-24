@@ -26,6 +26,28 @@ export function AddToCart({ stoneId, small }: { stoneId: string; small?: boolean
   );
 }
 
+export function RemoveFromCart({ stoneId }: { stoneId: string }) {
+  const [busy, setBusy] = useState(false);
+  const router = useRouter();
+  async function remove() {
+    setBusy(true);
+    await fetch(`/api/cart?stoneId=${encodeURIComponent(stoneId)}`, { method: "DELETE" });
+    setBusy(false);
+    router.refresh();
+  }
+  return (
+    <button
+      onClick={remove}
+      disabled={busy}
+      title="Remove from cart"
+      aria-label="Remove from cart"
+      style={{ background: "none", border: 0, cursor: "pointer", color: "var(--sold)", fontSize: 18, lineHeight: 1, padding: "4px 6px", opacity: busy ? 0.5 : 1 }}
+    >
+      ✕
+    </button>
+  );
+}
+
 export function CreateOrder({ disabled }: { disabled?: boolean }) {
   const [orderNo, setOrderNo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
