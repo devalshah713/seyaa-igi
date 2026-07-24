@@ -2,6 +2,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import type { Prisma, StoneStatus } from "@prisma/client";
 import { AddToCart, ViewToggle } from "@/components/actions";
+import { expandFilter } from "@/lib/facets";
 
 const STATUS_COLOR: Record<StoneStatus, string> = {
   AVAILABLE: "var(--ok)", HOLD: "var(--hold)", MEMO: "var(--memo)", SOLD: "var(--sold)",
@@ -16,22 +17,32 @@ export default async function ResultsPage({
   const sp = await searchParams;
   const view = sp.view === "grid" ? "grid" : "list";
 
-  // Multi-select filters arrive comma-separated → Prisma `in`.
-  const inList = (v?: string) => (v ? { in: v.split(",").filter(Boolean) } : undefined);
+  // Picked canonical values (comma-separated) → Prisma `in` over the raw variants.
+  const [shape, color, clarity, cut, polish, symmetry, fluorescence, growth, location] = await Promise.all([
+    expandFilter("shape", sp.shape),
+    expandFilter("color", sp.color),
+    expandFilter("clarity", sp.clarity),
+    expandFilter("cut", sp.cut),
+    expandFilter("polish", sp.polish),
+    expandFilter("symmetry", sp.symmetry),
+    expandFilter("fluorescence", sp.fluorescence),
+    expandFilter("growthType", sp.growth),
+    expandFilter("location", sp.location),
+  ]);
   // Numeric range → Prisma gte/lte (only set when a bound is present).
   const range = (min?: string, max?: string) =>
     min || max ? { gte: min ? Number(min) : undefined, lte: max ? Number(max) : undefined } : undefined;
 
   const where: Prisma.StoneWhereInput = {
-    ...(inList(sp.shape) ? { shape: inList(sp.shape) } : {}),
-    ...(inList(sp.color) ? { color: inList(sp.color) } : {}),
-    ...(inList(sp.clarity) ? { clarity: inList(sp.clarity) } : {}),
-    ...(inList(sp.cut) ? { cut: inList(sp.cut) } : {}),
-    ...(inList(sp.polish) ? { polish: inList(sp.polish) } : {}),
-    ...(inList(sp.symmetry) ? { symmetry: inList(sp.symmetry) } : {}),
-    ...(inList(sp.fluorescence) ? { fluorescence: inList(sp.fluorescence) } : {}),
-    ...(inList(sp.growth) ? { growthType: inList(sp.growth) } : {}),
-    ...(inList(sp.location) ? { location: inList(sp.location) } : {}),
+    ...(shape ? { shape } : {}),
+    ...(color ? { color } : {}),
+    ...(clarity ? { clarity } : {}),
+    ...(cut ? { cut } : {}),
+    ...(polish ? { polish } : {}),
+    ...(symmetry ? { symmetry } : {}),
+    ...(fluorescence ? { fluorescence } : {}),
+    ...(growth ? { growthType: growth } : {}),
+    ...(location ? { location } : {}),
     ...(range(sp.caratMin, sp.caratMax) ? { carat: range(sp.caratMin, sp.caratMax) } : {}),
     ...(range(sp.priceMin, sp.priceMax) ? { totalPrice: range(sp.priceMin, sp.priceMax) } : {}),
     ...(range(sp.depthMin, sp.depthMax) ? { depthPct: range(sp.depthMin, sp.depthMax) } : {}),
