@@ -12,6 +12,7 @@ type Facets = {
 // Static lists reproduced from the approved prototype.
 const SHAPES = ["Round", "Oval", "Pear", "Cushion", "Emerald", "Radiant", "Princess", "Asscher", "Marquise", "Heart", "Trilliant", "Baguette", "Square", "Hexagon"];
 const COLORS = ["D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q"];
+const FANCY_COLORS = ["Yellow", "Orange", "Pink", "Red", "Purple", "Violet", "Blue", "Green", "Brown", "Champagne", "Gray", "Black"];
 const CLARITY = ["FL", "IF", "VVS1", "VVS2", "VS1", "VS2", "SI1", "SI2", "SI3", "I1", "I2", "I3"];
 const GRADES = ["Ideal", "Excellent", "Very Good", "Good", "Fair", "Poor"];
 const FLUOR: [string, string][] = [["None", "None"], ["Faint", "Faint"], ["Medium", "Medium"], ["Strong", "Strong"], ["V Strong", "Very Strong"]];
@@ -55,6 +56,7 @@ function StaticRange({ label }: { label: string }) {
 export default function SearchFilters({ facets }: { facets: Facets }) {
   const router = useRouter();
   const [sel, setSel] = useState<Record<string, string[]>>({});
+  const [colorTab, setColorTab] = useState<"white" | "fancy">("white");
   const [caratMin, setCaratMin] = useState("");
   const [caratMax, setCaratMax] = useState("");
   const [priceMin, setPriceMin] = useState("");
@@ -144,9 +146,14 @@ export default function SearchFilters({ facets }: { facets: Facets }) {
         {/* Color */}
         <div className="card">
           <div className="chd"><h3>Color</h3><span className="note">{chosen("color").length ? `${chosen("color").length} selected` : "Any"}</span></div>
-          <div className="subtab"><b>White</b><span>Fancy</span></div>
-          <span className="check"><span className="bx" />No BGM (Brown / Green / Milky)</span>
-          <div className="wrap" style={{ marginTop: 12 }}>{COLORS.map((c) => chip("color", c))}</div>
+          <div className="subtab">
+            <b style={{ cursor: "pointer", color: colorTab === "white" ? "var(--b)" : "var(--i4)", fontWeight: colorTab === "white" ? 700 : 500, fontSize: 13 }} onClick={() => setColorTab("white")}>White</b>
+            <b style={{ cursor: "pointer", color: colorTab === "fancy" ? "var(--b)" : "var(--i4)", fontWeight: colorTab === "fancy" ? 700 : 500, fontSize: 13 }} onClick={() => setColorTab("fancy")}>Fancy</b>
+          </div>
+          {colorTab === "white" && <span className="check"><span className="bx" />No BGM (Brown / Green / Milky)</span>}
+          <div className="wrap" style={{ marginTop: 12 }}>
+            {(colorTab === "white" ? COLORS : FANCY_COLORS).map((c) => chip("color", c))}
+          </div>
         </div>
 
         {/* Clarity */}
