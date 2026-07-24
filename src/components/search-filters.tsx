@@ -161,8 +161,7 @@ export default function SearchFilters({ facets }: { facets: Facets }) {
         {/* Clarity */}
         <div className="card">
           <div className="chd"><h3>Clarity</h3><span className="note">{chosen("clarity").length ? `${chosen("clarity").length} selected` : "Any"}</span></div>
-          <span className="check"><span className="bx" />Eye Clean</span>
-          <div className="wrap" style={{ marginTop: 12 }}>{CLARITY.map((c) => chip("clarity", c))}</div>
+          <div className="wrap">{CLARITY.map((c) => chip("clarity", c))}</div>
         </div>
 
         {/* Cut, Polish & Symmetry */}
