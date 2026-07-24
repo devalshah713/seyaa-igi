@@ -1,0 +1,206 @@
+// Seyaa Solitaire — B2B trade portal data model
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  SALES
+  ADMIN
+}
+
+enum AccountStatus {
+  PENDING // application submitted, awaiting KYC approval
+  APPROVED
+  SUSPENDED
+  REJECTED
+}
+
+enum DocType {
+  AADHAAR
+  GST
+}
+
+enum DocStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum OtpPurpose {
+  SIGNUP
+  LOGIN
+}
+
+enum StoneStatus {
+  AVAILABLE
+  HOLD
+  MEMO
+  SOLD
+}
+
+enum OrderStatus {
+  NEW // Order ID created, emailed to admin
+  ASSIGNED // salesperson assigned
+  QUOTED // pricing sent to customer
+  CONFIRMED
+  CANCELLED
+}
+
+enum RequestKind {
+  MEMO
+  HOLD
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  DECLINED
+  RETURNED // memo returned
+  EXPIRED // hold expired
+  RELEASED
+}
+
+model User {
+  id            String        @id @default(cuid())
+  firstName     String
+  lastName      String
+  email         String        @unique
+  emailVerified Boolean       @default(false)
+  mobile        String?
+  companyName   String?
+  gstNumber     String?
+  passwordHash  String?
+  role          Role          @default(CUSTOMER)
+  status        AccountStatus @default(PENDING)
+
+  kycDocuments KycDocument[]
+  cartItems    CartItem[]
+  orders       Order[]        @relation("CustomerOrders")
+  assigned     Order[]        @relation("AssignedOrders")
+  requests     TradeRequest[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model KycDocument {
+  id        String    @id @default(cuid())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  type      DocType
+  fileUrl   String // object-storage URL (S3 / Vercel Blob)
+  status    DocStatus @default(PENDING)
+  createdAt DateTime  @default(now())
+}
+
+model OtpCode {
+  id        String     @id @default(cuid())
+  email     String
+  codeHash  String
+  purpose   OtpPurpose
+  expiresAt DateTime
+  consumed  Boolean    @default(false)
+  createdAt DateTime   @default(now())
+
+  @@index([email, purpose])
+}
+
+model Stone {
+  id            String      @id @default(cuid())
+  ref           String      @unique // Seyaa reference / stock number
+  shape         String
+  carat         Float
+  color         String
+  clarity       String
+  cut           String?
+  polish        String?
+  symmetry      String?
+  fluorescence  String?
+  lab           String      @default("IGI")
+  reportNo      String?
+  growthType    String? // CVD / HPHT
+  treatment     String?
+  location      String?
+  measurements  String?
+  depthPct      Float?
+  tablePct      Float?
+  ratio         Float?
+  costPrice     Float? // internal, admin-only
+  pricePerCt    Float?
+  totalPrice    Float?
+  status        StoneStatus @default(AVAILABLE)
+  mediaPhotoUrl String?
+  mediaVideoUrl String?
+  mediaCertUrl  String?
+
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+  requests   TradeRequest[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, shape])
+}
+
+model CartItem {
+  id      String @id @default(cuid())
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+  stone   Stone  @relation(fields: [stoneId], references: [id], onDelete: Cascade)
+  stoneId String
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, stoneId])
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  orderNo        String      @unique // e.g. SEY-ORD-2026-0142
+  customer       User        @relation("CustomerOrders", fields: [customerId], references: [id])
+  customerId     String
+  assignedTo     User?       @relation("AssignedOrders", fields: [assignedToId], references: [id])
+  assignedToId   String?
+  status         OrderStatus @default(NEW)
+  indicativeTotal Float      @default(0)
+  notes          String?
+
+  items OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrderItem {
+  id            String @id @default(cuid())
+  order         Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId       String
+  stone         Stone  @relation(fields: [stoneId], references: [id])
+  stoneId       String
+  priceSnapshot Float?
+}
+
+// Memo (consignment) and Hold (timed reservation) requests
+model TradeRequest {
+  id        String        @id @default(cuid())
+  kind      RequestKind
+  status    RequestStatus @default(PENDING)
+  user      User          @relation(fields: [userId], references: [id])
+  userId    String
+  stone     Stone         @relation(fields: [stoneId], references: [id])
+  stoneId   String
+  days      Int? // memo period
+  hours     Int? // hold duration
+  expiresAt DateTime? // return-by (memo) / expiry (hold)
+  note      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
