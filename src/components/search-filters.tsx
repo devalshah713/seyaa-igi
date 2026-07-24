@@ -241,7 +241,6 @@ export default function SearchFilters({ facets }: { facets: Facets }) {
       <div className="foot" style={{ position: "sticky", bottom: 0 }}>
         <button className="btn out" onClick={reset}>Reset All</button>
         <div style={{ flex: 1 }} />
-        <span style={{ fontSize: 12.5, color: "var(--i6)" }}>≈ <b>{facets.total.toLocaleString()}</b> stones match your criteria</span>
         <button className="btn pri" onClick={apply}>Apply Filters</button>
       </div>
     </>
