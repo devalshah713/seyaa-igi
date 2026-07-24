@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { ShapeIcon } from "./shape-icons";
 
 type Facets = {
-  shape: string[]; color: string[]; clarity: string[]; cut: string[]; polish: string[];
+  shape: string[]; colorFancy: string[]; clarity: string[]; cut: string[]; polish: string[];
   symmetry: string[]; fluorescence: string[]; growthType: string[]; location: string[];
   caratMin: number; caratMax: number; priceMin: number; priceMax: number; total: number;
 };
@@ -12,7 +12,6 @@ type Facets = {
 // Static lists reproduced from the approved prototype.
 const SHAPES = ["Round", "Oval", "Pear", "Cushion", "Emerald", "Radiant", "Princess", "Asscher", "Marquise", "Heart", "Trilliant", "Baguette", "Square", "Hexagon"];
 const COLORS = ["D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q"];
-const FANCY_COLORS = ["Yellow", "Orange", "Pink", "Red", "Purple", "Violet", "Blue", "Green", "Brown", "Champagne", "Gray", "Black"];
 const CLARITY = ["FL", "IF", "VVS1", "VVS2", "VS1", "VS2", "SI1", "SI2", "SI3", "I1", "I2", "I3"];
 const GRADES = ["Ideal", "Excellent", "Very Good", "Good", "Fair", "Poor"];
 const FLUOR: [string, string][] = [["None", "None"], ["Faint", "Faint"], ["Medium", "Medium"], ["Strong", "Strong"], ["V Strong", "Very Strong"]];
@@ -152,7 +151,11 @@ export default function SearchFilters({ facets }: { facets: Facets }) {
           </div>
           {colorTab === "white" && <span className="check"><span className="bx" />No BGM (Brown / Green / Milky)</span>}
           <div className="wrap" style={{ marginTop: 12 }}>
-            {(colorTab === "white" ? COLORS : FANCY_COLORS).map((c) => chip("color", c))}
+            {colorTab === "white"
+              ? COLORS.map((c) => chip("color", c))
+              : facets.colorFancy.length
+                ? facets.colorFancy.map((c) => chip("color", c))
+                : <span style={{ fontSize: 12.5, color: "var(--i6)" }}>No fancy-colour stones in stock.</span>}
           </div>
         </div>
 
