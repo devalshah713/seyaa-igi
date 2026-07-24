@@ -108,7 +108,6 @@ export default function SearchFilters({ facets }: { facets: Facets }) {
           <div className="page-title"><h2>Search Inventory</h2><p>Lab-Grown Diamonds · IGI Certified · Seyaa Solitaire stock</p></div>
           <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
             <span className="chip sel">Classic Search</span>
-            <span className="chip">AI Search <b style={{ color: "var(--b)", fontSize: 9 }}>βeta</b></span>
           </div>
         </div>
 
