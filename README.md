@@ -18,9 +18,24 @@ public/prototype.html    # the full 14-screen interactive UI prototype (design r
 public/emblem.png        # Seyaa Solitaire emblem
 ```
 
-The **front-end design** (all 14 screens) currently lives as the self-contained
-`public/prototype.html` and is served at `/prototype.html`. It is being migrated into
-Next.js routes/components screen-by-screen against the API below.
+The **front-end is migrated onto the API** as Next.js routes (below). The original
+self-contained design reference remains at `public/prototype.html`.
+
+**Pages** (App Router, `src/app`)
+
+| Route | Description |
+|---|---|
+| `/login` | Sign in + KYC Request Access (OTP + Aadhaar/GST upload) |
+| `/search` | Filter builder → `/results` |
+| `/results` | Inventory (DB-queried) — list / grid, add to cart |
+| `/stone/[ref]` | Stone detail + Add to Cart / Memo / Hold |
+| `/cart` | Cart → **Create Order ID** |
+| `/account` | My orders + memo/hold |
+| `/admin` | Dashboard (KPIs) |
+| `/admin/inventory` · `/upload` | Inventory table · Excel import (analyze → map → publish) |
+| `/admin/approvals` · `/customers` | Assign orders, approve memo/hold · approve KYC |
+
+Auth-gated via a `(portal)` layout; `/admin/*` requires ADMIN/SALES.
 
 ## Backend — Next.js (App Router) + Prisma + Postgres
 
@@ -74,8 +89,9 @@ File storage uses Vercel Blob when `BLOB_READ_WRITE_TOKEN` is set, otherwise a l
 
 ## Still to wire (next steps)
 
-- **Front-end migration** — port `public/prototype.html` screens to Next.js pages calling the API.
-- **Set-password flow** — email a set/reset-password link on KYC approval (currently status only).
+- **Set-password flow** — email a set/reset-password link on KYC approval (currently status only),
+  so approved customers can sign in.
+- **Faceted shape icons + full filter parity** — port the remaining filter controls and cut icons.
 - **Scheduled jobs** — memo-return + hold-expiry to release stones back to AVAILABLE.
 - **Private KYC storage** — move Aadhaar/GST to a private bucket / signed URLs (public-unguessable today).
 - **SMS OTP** (optional) for mobile verification.
