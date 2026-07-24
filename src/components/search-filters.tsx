@@ -149,7 +149,6 @@ export default function SearchFilters({ facets }: { facets: Facets }) {
             <b style={{ cursor: "pointer", color: colorTab === "white" ? "var(--b)" : "var(--i4)", fontWeight: colorTab === "white" ? 700 : 500, fontSize: 13 }} onClick={() => setColorTab("white")}>White</b>
             <b style={{ cursor: "pointer", color: colorTab === "fancy" ? "var(--b)" : "var(--i4)", fontWeight: colorTab === "fancy" ? 700 : 500, fontSize: 13 }} onClick={() => setColorTab("fancy")}>Fancy</b>
           </div>
-          {colorTab === "white" && <span className="check"><span className="bx" />No BGM (Brown / Green / Milky)</span>}
           <div className="wrap" style={{ marginTop: 12 }}>
             {colorTab === "white"
               ? COLORS.map((c) => chip("color", c))
