@@ -1,0 +1,874 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Seyaa Solitaire — Trade Portal Prototype</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* ============ SHELL TOKENS (theme-aware) ============ */
+:root{
+  --shell-bg:#EAE6E1; --shell-panel:#FFFFFF; --shell-ink:#211C19; --shell-mut:#6B6259;
+  --shell-bd:#E1DBD4; --shell-rail:#241D18; --shell-rail-ink:#EDE6DF; --shell-rail-mut:#A99E93;
+  --brand:#DD611C; --emb:url("emblem.png");
+}
+@media (prefers-color-scheme:dark){
+  :root{ --shell-bg:#151210; --shell-panel:#201A16; --shell-ink:#F1EBE4; --shell-mut:#A99E93;
+    --shell-bd:#332A23; --shell-rail:#0E0B09; --shell-rail-ink:#F1EBE4; --shell-rail-mut:#8C8177; }
+}
+:root[data-theme="light"]{ --shell-bg:#EAE6E1; --shell-panel:#FFFFFF; --shell-ink:#211C19; --shell-mut:#6B6259; --shell-bd:#E1DBD4; --shell-rail:#241D18; --shell-rail-ink:#EDE6DF; --shell-rail-mut:#A99E93; }
+:root[data-theme="dark"]{ --shell-bg:#151210; --shell-panel:#201A16; --shell-ink:#F1EBE4; --shell-mut:#A99E93; --shell-bd:#332A23; --shell-rail:#0E0B09; --shell-rail-ink:#F1EBE4; --shell-rail-mut:#8C8177; }
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:"Montserrat","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  background:var(--shell-bg); color:var(--shell-ink);
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+.script{font-family:"Allura","Snell Roundhand","Segoe Script","Brush Script MT",cursive}
+
+/* ============ SHELL LAYOUT ============ */
+.app{display:grid; grid-template-columns:262px 1fr; min-height:100vh}
+.rail{background:var(--shell-rail); color:var(--shell-rail-ink); position:sticky; top:0; height:100vh; overflow-y:auto; padding:20px 14px 40px}
+.rail-brand{display:flex; align-items:center; gap:10px; padding:6px 8px 18px}
+.rail-brand img{width:30px;height:30px;object-fit:contain}
+.rail-brand .nm{font-weight:700; letter-spacing:1.5px; font-size:13px}
+.rail-brand .sub{font-size:10px; color:var(--shell-rail-mut); letter-spacing:.5px; margin-top:2px}
+.rail h4{font-size:10.5px; letter-spacing:1.4px; text-transform:uppercase; color:var(--shell-rail-mut); margin:18px 10px 8px; font-weight:700}
+.rail a{display:flex; align-items:center; gap:10px; padding:9px 11px; border-radius:9px; color:var(--shell-rail-mut); text-decoration:none; font-size:13px; font-weight:500; cursor:pointer; transition:background .15s,color .15s}
+.rail a .ix{width:20px;text-align:center;opacity:.85;font-size:12px}
+.rail a:hover{background:rgba(255,255,255,.05); color:var(--shell-rail-ink)}
+.rail a.on{background:var(--brand); color:#fff; font-weight:600}
+.rail a.on .ix{opacity:1}
+
+.main{padding:0}
+.topbar{position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:14px; padding:14px 26px; background:color-mix(in srgb, var(--shell-panel) 88%, transparent); backdrop-filter:blur(8px); border-bottom:1px solid var(--shell-bd)}
+.topbar .t-title{font-weight:600; font-size:14px}
+.topbar .t-sub{font-size:12px; color:var(--shell-mut)}
+.topbar .grow{flex:1}
+.pill-note{font-size:11px; color:var(--shell-mut); border:1px solid var(--shell-bd); padding:5px 10px; border-radius:20px}
+.tgl{border:1px solid var(--shell-bd); background:var(--shell-panel); color:var(--shell-ink); border-radius:20px; padding:6px 12px; font:inherit; font-size:12px; font-weight:600; cursor:pointer}
+
+.stage{padding:26px; display:flex; justify-content:center}
+.browser{width:100%; max-width:1320px; background:#fff; border-radius:14px; overflow:hidden; box-shadow:0 12px 40px rgba(30,20,10,.14), 0 2px 8px rgba(30,20,10,.08); border:1px solid rgba(0,0,0,.05)}
+.chrome{display:flex; align-items:center; gap:8px; padding:11px 16px; background:#EFEBE6; border-bottom:1px solid #E2DCD5}
+.chrome .dots{display:flex; gap:6px}
+.chrome .dots i{width:11px;height:11px;border-radius:50%;display:block}
+.chrome .url{flex:1; background:#fff; border-radius:7px; padding:6px 12px; font-size:11.5px; color:#8a8078; text-align:center; border:1px solid #E2DCD5}
+.screen{display:none}
+.screen.on{display:block}
+
+/* ============ PRODUCT PALETTE (fixed light) ============ */
+.vp{
+  --b:#DD611C; --bs:#FBEBE0; --bd2:#C4551A; --dark:#201A16; --head:#2C2621;
+  --ink:#211C19; --i6:#6B6259; --i4:#A49C94; --bd:#E7E3DE; --hair:#F0ECE7; --page:#F1EFEC; --surf:#FFFFFF;
+  --ok:#2E9E6B; --hold:#C98A16; --memo:#3B82C4; --sold:#D14A3A; --okbg:#E9F5EF;
+  background:var(--page); color:var(--ink); font-size:13px;
+}
+.vp *{box-sizing:border-box}
+.vp .tnum{font-variant-numeric:tabular-nums}
+
+/* product nav */
+.pnav{display:flex; align-items:center; gap:26px; background:var(--dark); padding:0 24px; height:60px; color:#fff}
+.pnav .lg{display:flex; align-items:center; gap:9px}
+.pnav .lg img{width:22px;height:22px;object-fit:contain}
+.pnav .lg .nm{font-weight:700; letter-spacing:1.4px; font-size:13.5px}
+.pnav .navi{display:flex; gap:24px; align-items:center}
+.pnav .navi a{color:#B9AFA6; text-decoration:none; font-size:12.5px; font-weight:500; cursor:pointer}
+.pnav .navi a.on{color:#fff; font-weight:600}
+.pnav .grow{flex:1}
+.pnav .acct{display:flex; align-items:center; gap:8px; background:#33291F; padding:7px 12px; border-radius:8px; font-size:12px}
+.pnav .acct .av{width:20px;height:20px;border-radius:50%;background:var(--b)}
+
+/* generic product bits */
+.gem{color:#CFC7BF}
+.chip{display:inline-flex; align-items:center; gap:5px; padding:8px 13px; border-radius:8px; background:#F0EDE9; color:var(--i6); font-size:12px; font-weight:500; cursor:pointer; border:1px solid transparent}
+.chip.sel{background:var(--bs); color:var(--b); border-color:var(--b); font-weight:600}
+.chip.wide{min-width:46px; justify-content:center}
+.btn{display:inline-flex; align-items:center; gap:8px; padding:11px 20px; border-radius:9px; font-size:13px; font-weight:600; cursor:pointer; border:1px solid transparent; background:#F0EDE9; color:var(--i6); white-space:nowrap}
+.btn.sm{padding:8px 13px; font-size:12px}
+.btn.pri{background:var(--b); color:#fff}
+.btn.out{background:#fff; border-color:var(--b); color:var(--b)}
+.btn.dk{background:var(--head); color:#fff}
+.card{background:var(--surf); border:1px solid var(--bd); border-radius:12px; padding:18px 22px}
+.card h3{margin:0; font-size:15px; font-weight:600}
+.chd{display:flex; align-items:center; gap:10px; margin-bottom:14px}
+.chd .note{margin-left:auto; font-size:12px; color:var(--i4); font-weight:500}
+.field{background:#F6F4F2; border:1px solid var(--bd); border-radius:8px; padding:11px 14px}
+.field .lb{font-size:10px; color:var(--i4)}
+.field .vl{font-size:13px; font-weight:500}
+.check{display:inline-flex; align-items:center; gap:9px; font-size:12.5px; color:var(--i6); cursor:pointer}
+.check .bx{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--bd);background:#fff;display:grid;place-items:center;flex:0 0 auto}
+.check.on .bx{background:var(--b); border-color:var(--b)}
+.check.on .bx::after{content:"";width:5px;height:9px;border:2px solid #fff;border-top:0;border-left:0;transform:rotate(45deg);margin-top:-2px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:0 0 auto}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.wrap{display:flex; flex-wrap:wrap; gap:9px}
+.row2{display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start}
+.content{padding:22px 26px; display:flex; flex-direction:column; gap:16px}
+.foot{display:flex; align-items:center; gap:14px; padding:16px 26px; background:var(--surf); border-top:1px solid var(--bd)}
+
+/* table */
+.tbl-wrap{overflow-x:auto; border:1px solid var(--bd); border-radius:12px}
+table.tbl{border-collapse:collapse; width:100%; min-width:1180px; font-size:12px}
+table.tbl thead th{background:var(--head); color:#E4DCD4; text-align:left; padding:12px 10px; font-size:11px; font-weight:600; white-space:nowrap; position:sticky; top:0}
+table.tbl thead th .sx{color:#8C817A; margin-left:3px; font-size:9px}
+table.tbl td{padding:11px 10px; border-bottom:1px solid var(--hair); white-space:nowrap; color:var(--i6)}
+table.tbl td.ref{font-weight:600; color:var(--ink)}
+table.tbl td.tot{font-weight:700; color:var(--ink)}
+table.tbl tr.sel td{background:#FDF4EE}
+table.tbl tr:hover td{background:#FAF7F4}
+.hicon{color:var(--i4); cursor:pointer}
+.hicon.fav{color:var(--b)}
+.linka{color:var(--b); font-weight:600; cursor:pointer}
+
+.page-title h2{margin:0; font-size:22px; font-weight:700}
+.page-title p{margin:3px 0 0; font-size:12.5px; color:var(--i6)}
+
+.gembox{background:linear-gradient(135deg,#F5F2EF,#E6E1DC); display:grid; place-items:center}
+
+/* login */
+.login{display:grid; grid-template-columns:0.9fr 1.1fr; min-height:640px}
+.login .brandside{background:var(--b); color:#fff; padding:56px 60px; display:flex; flex-direction:column; gap:20px; align-items:center; justify-content:center; text-align:center}
+.login .brandside .lock{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:2px;font-size:14px}
+.login .brandside .lock img{width:26px;height:26px}
+.login .brandside .hero-emb{width:320px;height:320px;max-width:100%;object-fit:contain;margin-bottom:8px}
+.login .brandside .wm{font-size:64px;line-height:1;margin:2px 0}
+.login .brandside p{font-size:15px;line-height:1.55;color:#FCE3D3;margin:0 auto;max-width:38ch}
+.login .brandside .tags{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;margin-bottom:6px}
+.login .brandside .tags span{background:rgba(255,255,255,.16);padding:7px 13px;border-radius:20px;font-size:11.5px;font-weight:600}
+.login .formside{background:var(--page); display:grid; place-items:center; padding:40px}
+.login-card{width:100%; max-width:400px; background:#fff; border:1px solid var(--bd); border-radius:16px; padding:36px 34px; box-shadow:0 10px 30px rgba(30,20,10,.06); display:flex; flex-direction:column; gap:16px}
+.seg{display:flex; background:var(--page); border-radius:10px; padding:4px}
+.seg button{flex:1; border:0; background:transparent; padding:9px; border-radius:8px; font:inherit; font-size:13px; font-weight:600; color:var(--i6); cursor:pointer}
+.seg button.on{background:#fff; color:var(--ink); box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.lfield label{display:block; font-size:12.5px; font-weight:600; color:var(--i6); margin-bottom:6px}
+.lfield input{width:100%; border:1px solid var(--bd); background:#F6F4F2; border-radius:9px; padding:12px 14px; font:inherit; font-size:14px; color:var(--ink)}
+.lfield input::placeholder{color:var(--i4)}
+
+/* stone detail */
+.detail{display:grid; grid-template-columns:1.05fr 1fr; gap:24px; align-items:start}
+.media-main{aspect-ratio:4/3; border-radius:14px; border:1px solid var(--bd); position:relative; overflow:hidden}
+.media-tools{position:absolute; top:14px; right:14px; display:flex; gap:8px}
+.media-tools i{width:32px;height:32px;border-radius:50%;background:#fff;border:1px solid var(--bd);display:grid;place-items:center;font-style:normal;font-size:14px;color:var(--i6);cursor:pointer}
+.rail-thumbs{display:flex; gap:10px; margin-top:12px}
+.thumb{width:104px;height:74px;border-radius:10px;border:1px solid var(--bd);background:#F5F2EF;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:10px;color:var(--i6);cursor:pointer}
+.thumb.on{border:2px solid var(--b);background:#fff}
+.spec-grid{display:grid; grid-template-columns:1fr 1fr; gap:0 34px}
+.spec-grid .sr{display:flex; align-items:center; padding:9px 0; border-bottom:1px solid var(--hair); font-size:12.5px}
+.spec-grid .sr .k{color:var(--i4)}
+.spec-grid .sr .v{margin-left:auto; font-weight:600; color:var(--ink)}
+
+/* stat tiles */
+.stats{display:grid; grid-template-columns:repeat(4,1fr); gap:16px}
+.stat{background:var(--surf); border:1px solid var(--bd); border-radius:12px; padding:18px 20px}
+.stat .lb{font-size:12px; color:var(--i6); display:flex; align-items:center; gap:7px}
+.stat .big{font-size:30px; font-weight:700; margin-top:8px; letter-spacing:-.5px}
+.stat .dl{font-size:11.5px; margin-top:4px; font-weight:600}
+.up{color:var(--ok)} .dn{color:var(--sold)}
+
+/* upload */
+.dropzone{border:2px dashed var(--bd); border-radius:14px; background:#FBFAF8; padding:44px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:10px}
+.dropzone .ic{width:56px;height:56px;border-radius:14px;background:var(--bs);display:grid;place-items:center;color:var(--b)}
+.steps{display:flex; gap:8px; align-items:center; font-size:12px; color:var(--i4); font-weight:600}
+.steps .st{display:flex;align-items:center;gap:8px}
+.steps .st .n{width:22px;height:22px;border-radius:50%;background:#EEE9E4;color:var(--i6);display:grid;place-items:center;font-size:11px}
+.steps .st.on .n{background:var(--b);color:#fff}
+.steps .st.on{color:var(--ink)}
+.map-row{display:grid;grid-template-columns:1fr 30px 1fr auto;gap:12px;align-items:center;padding:11px 14px;border:1px solid var(--bd);border-radius:10px;background:#fff}
+.map-row .xl{font-size:12.5px;font-weight:600}
+.map-row .sub{font-size:11px;color:var(--i4)}
+.sel-box{border:1px solid var(--bd);border-radius:8px;padding:9px 12px;font-size:12.5px;font-weight:600;background:#F6F4F2;display:flex;align-items:center;gap:8px}
+
+/* account tabs */
+.atabs{display:flex; gap:4px; border-bottom:1px solid var(--bd)}
+.atabs button{border:0;background:transparent;padding:12px 16px;font:inherit;font-size:13px;font-weight:600;color:var(--i6);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.atabs button.on{color:var(--b);border-bottom-color:var(--b)}
+
+/* modal-ish confirm */
+.confirm{max-width:560px;margin:0 auto;background:#fff;border:1px solid var(--bd);border-radius:16px;overflow:hidden}
+.confirm .ch{padding:20px 26px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:12px}
+.confirm .ch .ic{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;color:#fff}
+.confirm .cb{padding:24px 26px;display:flex;flex-direction:column;gap:16px}
+.line{display:flex;align-items:center;font-size:13px}
+.line .k{color:var(--i6)} .line .v{margin-left:auto;font-weight:600}
+.callout{background:#FBF4EF;border:1px solid #F1D9C9;border-radius:10px;padding:13px 15px;font-size:12.5px;color:#7a4a2c;display:flex;gap:10px}
+
+@media (max-width:560px){
+  .app{grid-template-columns:1fr}.rail{display:none}
+}
+.mk{background:var(--emb) center/contain no-repeat;display:block}.pnav .lg .mk{width:22px;height:22px;flex:0 0 auto}.login .brandside .lock .mk{width:26px;height:26px}.rail-brand .mk{width:30px;height:30px}.gicon *{vector-effect:non-scaling-stroke;stroke-width:1}.pnav .navcart{display:flex;align-items:center;gap:6px;background:#33291F;color:#F0E3D8;padding:7px 11px;border-radius:8px;font-size:12px;font-weight:600;margin-right:10px}
+.login-card .otp{display:flex;gap:7px}.login-card .otp i{width:38px;height:44px;border:1px solid var(--bd);border-radius:9px;display:grid;place-items:center;font-style:normal;font-weight:700;font-size:16px;background:#F6F4F2;color:var(--ink)}
+.up-box{border:1.5px dashed var(--bd);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:11px;background:#FBFAF8;font-size:12px;color:var(--i6);cursor:pointer}
+.up-box .ic{width:34px;height:34px;border-radius:8px;background:var(--bs);color:var(--b);display:grid;place-items:center;flex:0 0 auto;font-size:16px}
+.tag-req{font-size:10px;font-weight:700;color:#B4471F;background:#FBE7DC;padding:2px 8px;border-radius:10px;margin-left:6px;letter-spacing:.3px}
+.tag-opt{font-size:10px;font-weight:600;color:var(--i6);background:#EEE9E4;padding:2px 8px;border-radius:10px;margin-left:6px}
+.verified{color:var(--ok);font-weight:600;font-size:12px}
+.cc{background:#EFEBE6;border:1px solid var(--bd);border-radius:9px;padding:0 13px;display:flex;align-items:center;font-weight:600;font-size:14px;color:var(--i6)}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="rail">
+    <div class="rail-brand">
+      <span class="mk" style="width:30px;height:30px;flex:0 0 auto"></span>
+      <div><div class="nm">SEYAA SOLITAIRE</div><div class="sub">Trade Portal · Prototype</div></div>
+    </div>
+    <h4>Trade Portal</h4>
+    <a data-s="login" class="on"><span class="ix">◈</span> Login / Request Access</a>
+    <a data-s="filter"><span class="ix">⚙</span> Filter &amp; Search <span style="margin-left:auto;font-size:9px;opacity:.6">M1</span></a>
+    <a data-s="list"><span class="ix">▤</span> Results — List <span style="margin-left:auto;font-size:9px;opacity:.6">M2</span></a>
+    <a data-s="grid"><span class="ix">▦</span> Results — Grid <span style="margin-left:auto;font-size:9px;opacity:.6">M2</span></a>
+    <a data-s="detail"><span class="ix">◆</span> Stone Detail <span style="margin-left:auto;font-size:9px;opacity:.6">M3</span></a>
+    <a data-s="buy"><span class="ix">🛒</span> Cart &amp; Create Order</a>
+    <a data-s="memo"><span class="ix">⇄</span> Memo — Consignment</a>
+    <a data-s="hold"><span class="ix">⏱</span> Hold — Reserve</a>
+    <a data-s="account"><span class="ix">☰</span> My Account</a>
+    <h4>Admin</h4>
+    <a data-s="dash"><span class="ix">▧</span> Dashboard</a>
+    <a data-s="upload"><span class="ix">⭱</span> Stock Upload (Excel)</a>
+    <a data-s="inventory"><span class="ix">▤</span> Inventory</a>
+    <a data-s="approvals"><span class="ix">✓</span> Requests / Approvals</a>
+    <a data-s="customers"><span class="ix">◑</span> Customers</a>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="t-title">Seyaa Solitaire — B2B Trade Portal</div>
+        <div class="t-sub" id="crumb">Login / Request Access</div>
+      </div>
+      <div class="grow"></div>
+      <span class="pill-note">Prototype — real Montserrat &amp; emblem applied in production</span>
+      <button class="tgl" id="themeBtn">◐ Theme</button>
+    </div>
+    <div class="stage">
+      <div class="browser">
+        <div class="chrome">
+          <div class="dots"><i style="background:#E5695B"></i><i style="background:#E7B14A"></i><i style="background:#5FB868"></i></div>
+          <div class="url" id="urlbar">app.seyaasolitaire.com/login</div>
+        </div>
+
+        <!-- ================= LOGIN ================= -->
+        <section class="screen on" id="s-login">
+          <div class="vp"><div class="login">
+            <div class="brandside">
+              <span class="hero-emb mk"></span>
+              <div class="script wm">Seyaa Solitaire</div>
+              <p>The trade desk for IGI-certified lab-grown diamonds. Search live inventory and Buy, take on Memo, or Hold — direct, no middlemen.</p>
+              <div class="tags"><span>IGI Certified</span><span>CVD &amp; HPHT</span><span>Ready to Ship</span></div>
+            </div>
+            <div class="formside">
+              <div class="login-card">
+                <div class="seg"><button id="tabSignin" class="on" onclick="loginTab('signin')">Sign In</button><button id="tabRequest" onclick="loginTab('request')">Request Access</button></div>
+                <div id="signin-pane" style="display:flex;flex-direction:column;gap:16px">
+                  <div><div style="font-size:23px;font-weight:700">Welcome back</div><div style="font-size:13px;color:var(--i6);margin-top:3px">Sign in to your Seyaa Solitaire trade account.</div></div>
+                  <div class="lfield"><label>Work email</label><input placeholder="you@company.com"></div>
+                  <div class="lfield"><label>Password</label><input type="password" placeholder="••••••••"></div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px"><span class="check"><span class="bx"></span>Remember me</span><span class="linka">Forgot password?</span></div>
+                  <button class="btn pri" style="justify-content:center">Sign In</button>
+                  <div style="height:1px;background:var(--bd)"></div>
+                  <div style="text-align:center;font-size:12.5px;color:var(--i6)">New to Seyaa Solitaire? <span class="linka" onclick="loginTab('request')">Apply for a trade account</span></div>
+                </div>
+                <div id="request-pane" style="display:none;flex-direction:column;gap:13px">
+                  <div><div style="font-size:23px;font-weight:700">Apply for trade access</div><div style="font-size:13px;color:var(--i6);margin-top:3px">Verified accounts only. KYC is required to trade lab-grown diamonds.</div></div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                    <div class="lfield"><label>First name</label><input placeholder="Rajesh"></div>
+                    <div class="lfield"><label>Last name</label><input placeholder="Shah"></div>
+                  </div>
+                  <div class="lfield"><label>Email address</label>
+                    <div style="display:flex;gap:8px"><input style="flex:1" placeholder="you@company.com"><button class="btn" style="padding:11px 16px">Send OTP</button></div>
+                  </div>
+                  <div class="lfield"><label style="display:flex;align-items:center">Enter OTP <span class="verified" style="margin-left:auto">✓ Email verified</span></label>
+                    <div class="otp"><i>4</i><i>1</i><i>9</i><i>2</i><i>7</i><i>3</i></div>
+                  </div>
+                  <div class="lfield"><label>Mobile number</label>
+                    <div style="display:flex;gap:8px"><span class="cc">+91</span><input style="flex:1" placeholder="98 76 54 32 10"></div>
+                  </div>
+                  <div class="lfield"><label>Aadhaar card <span class="tag-req">Required · KYC</span></label>
+                    <div class="up-box"><span class="ic">⭱</span><div><div style="font-weight:600;color:var(--ink)">Upload Aadhaar (front &amp; back)</div><div>PDF or JPG · up to 5 MB</div></div></div>
+                  </div>
+                  <div class="lfield"><label>GST certificate <span class="tag-opt">Optional</span></label>
+                    <div class="up-box"><span class="ic" style="background:#EEE9E4;color:var(--i6)">⭱</span><div><div style="font-weight:600;color:var(--ink)">Upload company GST certificate</div><div>PDF or JPG · up to 5 MB</div></div></div>
+                  </div>
+                  <label class="check on" style="font-size:12px"><span class="bx"></span>I confirm the details &amp; documents are accurate</label>
+                  <button class="btn pri" style="justify-content:center">Submit Application</button>
+                  <div style="text-align:center;font-size:12px;color:var(--i6)">Reviewed by the Seyaa team — access granted once KYC is approved.</div>
+                </div>
+              </div>
+            </div>
+          </div></div>
+        </section>
+
+        <!-- ================= FILTER (M1) ================= -->
+        <section class="screen" id="s-filter">
+          <div class="vp">
+            <div class="pnav"><div class="lg"><span class="mk"></span><span class="nm">SEYAA SOLITAIRE</span></div><div class="navi"><a class="">Home</a><a class="on">Lab-Grown Diamonds</a><a class="">Saved Searches</a><a class="">Favorites</a><a class="">My Requests</a></div><div class="grow"></div><span class="navcart">🛒 Cart · 3</span><div class="acct"><span class="av"></span>Rajesh Traders</div></div>
+            <div class="content">
+              <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap">
+                <div class="page-title"><h2>Search Inventory</h2><p>Lab-Grown Diamonds · IGI Certified · Seyaa Solitaire stock</p></div>
+                <div style="margin-left:auto;display:flex;gap:8px"><span class="chip sel">Classic Search</span><span class="chip">AI Search <b style="color:var(--b);font-size:9px">βeta</b></span></div>
+              </div>
+
+              <div class="card">
+                <div class="chd"><h3>Shape</h3><span class="note">Selected: Round</span></div>
+                <div class="wrap" id="shapeWrap"></div>
+              </div>
+
+              <div class="card">
+                <div class="chd"><h3>Carat</h3></div>
+                <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px">
+                  <div class="field" style="width:150px"><div class="lb">Min, ct</div><div class="vl">3.20</div></div><span style="color:var(--i4)">›</span>
+                  <div class="field" style="width:150px"><div class="lb">Max, ct</div><div class="vl">3.29</div></div>
+                </div>
+                <div class="wrap" id="caratWrap"></div>
+              </div>
+
+              <div class="card">
+                <div class="chd"><h3>Color</h3><span class="note">From: E to E</span></div>
+                <div style="display:flex;gap:20px;border-bottom:1px solid var(--hair);padding-bottom:8px;margin-bottom:12px"><b style="font-size:13px;color:var(--b)">White</b><span style="font-size:13px;color:var(--i4);font-weight:500">Fancy</span></div>
+                <span class="check" style="margin-bottom:12px"><span class="bx"></span>No BGM (Brown / Green / Milky)</span>
+                <div class="wrap" id="colorWrap" style="margin-top:12px"></div>
+              </div>
+
+              <div class="card">
+                <div class="chd"><h3>Clarity</h3><span class="note">From: VVS2 to VVS2</span></div>
+                <span class="check" style="margin-bottom:12px"><span class="bx"></span>Eye Clean</span>
+                <div class="wrap" id="clarityWrap" style="margin-top:12px"></div>
+              </div>
+
+              <div class="card">
+                <div class="chd"><h3>Cut, Polish &amp; Symmetry</h3></div>
+                <div style="display:flex;gap:20px;align-items:center;margin-bottom:16px"><span class="check"><span class="bx"></span>Hearts &amp; Arrows</span><span class="chip sel">8X</span><span class="chip">3X+</span><span class="chip">3VG+</span></div>
+                <div id="cpsWrap" style="display:flex;flex-direction:column;gap:12px"></div>
+              </div>
+
+              <div class="card"><div class="chd"><h3>Fluorescence</h3><span class="note">From: None to None</span></div><div class="wrap" id="fluorWrap"></div></div>
+
+              <div class="row2">
+                <div class="card">
+                  <div class="chd"><h3>Total Price</h3></div>
+                  <div style="display:flex;gap:18px;border-bottom:1px solid var(--hair);padding-bottom:8px;margin-bottom:12px"><b style="font-size:13px;color:var(--b)">Total Price</b><span style="font-size:13px;color:var(--i4);font-weight:500">Price / ct</span></div>
+                  <div style="display:flex;gap:10px;align-items:center"><div class="field" style="flex:1"><div class="lb">Min, $</div><div class="vl" style="color:var(--i4)">—</div></div><span style="color:var(--i4)">›</span><div class="field" style="flex:1"><div class="lb">Max, $</div><div class="vl" style="color:var(--i4)">—</div></div></div>
+                </div>
+                <div class="card">
+                  <div class="chd"><h3>Location</h3></div>
+                  <div class="field" style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span style="color:var(--i4)">⌕</span><div class="vl">India</div></div>
+                  <span class="check"><span class="bx"></span>Exclude selected location(s)</span>
+                </div>
+              </div>
+
+              <div class="row2">
+                <div class="card"><div class="chd"><h3>Growth Type</h3></div><div style="display:flex;gap:24px"><span class="check on"><span class="bx"></span>CVD</span><span class="check"><span class="bx"></span>HPHT</span><span class="check"><span class="bx"></span>Others</span></div></div>
+                <div class="card"><div class="chd"><h3>Treatment</h3></div><div style="display:flex;gap:24px"><span class="check on"><span class="bx"></span>As Grown</span><span class="check"><span class="bx"></span>Treated</span><span class="check"><span class="bx"></span>Unknown</span></div></div>
+              </div>
+
+              <div class="card">
+                <div class="chd"><h3>Measurements</h3></div>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px" id="measWrap"></div>
+              </div>
+            </div>
+            <div class="foot">
+              <button class="btn">Reset All</button>
+              <div style="flex:1"></div>
+              <span style="font-size:12.5px;color:var(--i6)">≈ <b>1,240</b> stones match your criteria</span>
+              <button class="btn pri">Apply Filters</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= RESULTS LIST (M2) ================= -->
+        <section class="screen" id="s-list">
+          <div class="vp">
+            <div class="pnav"><div class="lg"><span class="mk"></span><span class="nm">SEYAA SOLITAIRE</span></div><div class="navi"><a class="">Home</a><a class="on">Lab-Grown Diamonds</a><a class="">Saved Searches</a><a class="">Favorites</a><a class="">My Requests</a></div><div class="grow"></div><span class="navcart">🛒 Cart · 3</span><div class="acct"><span class="av"></span>Rajesh Traders</div></div>
+            <div style="display:flex;align-items:center;gap:14px;padding:16px 26px;background:var(--surf);border-bottom:1px solid var(--bd)">
+              <span class="linka">‹ Modify Filters</span>
+              <span style="width:1px;height:22px;background:var(--bd)"></span>
+              <span style="font-size:13px"><b>Showing 1–60</b> <span style="color:var(--i6)">of 1,240 results</span></span>
+              <div style="flex:1"></div>
+              <button class="btn sm out" style="border-color:var(--bd);color:var(--i6)">Save Search</button>
+              <div class="seg" style="background:#EFEBE6"><button class="on" style="padding:7px 14px">List</button><button style="padding:7px 14px;background:transparent;box-shadow:none;color:var(--i6)">Grid</button></div>
+              <button class="btn sm out" style="border-color:var(--bd);color:var(--i6)">Configure Columns</button>
+              <button class="btn sm pri">Bulk Actions ▾</button>
+            </div>
+            <div class="content">
+              <div class="tbl-wrap">
+                <table class="tbl">
+                  <thead><tr>
+                    <th><span class="bx" style="display:inline-block;width:15px;height:15px;border:1.5px solid #8C817A;border-radius:4px"></span></th>
+                    <th>♡</th><th>Status</th><th>Seyaa Ref<span class="sx">↕</span></th><th>Shape<span class="sx">↕</span></th><th>Ct<span class="sx">↕</span></th><th>Col<span class="sx">↕</span></th><th>Clar<span class="sx">↕</span></th><th>Cut<span class="sx">↕</span></th><th>Pol</th><th>Sym</th><th>Fluor</th><th>Lab</th><th>Location</th><th>$/ct<span class="sx">↕</span></th><th>Total<span class="sx">↕</span></th><th></th>
+                  </tr></thead>
+                  <tbody id="listBody"></tbody>
+                </table>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:12px;color:var(--i6)">Rows per page: 60</span><div style="flex:1"></div>
+                <span class="chip">‹</span><span class="chip sel wide">1</span><span class="chip wide">2</span><span class="chip wide">3</span><span class="chip">…</span><span class="chip wide">21</span><span class="chip">›</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= RESULTS GRID (M2) ================= -->
+        <section class="screen" id="s-grid">
+          <div class="vp">
+            <div class="pnav"><div class="lg"><span class="mk"></span><span class="nm">SEYAA SOLITAIRE</span></div><div class="navi"><a class="">Home</a><a class="on">Lab-Grown Diamonds</a><a class="">Saved Searches</a><a class="">Favorites</a><a class="">My Requests</a></div><div class="grow"></div><span class="navcart">🛒 Cart · 3</span><div class="acct"><span class="av"></span>Rajesh Traders</div></div>
+            <div style="display:flex;align-items:center;gap:14px;padding:16px 26px;background:var(--surf);border-bottom:1px solid var(--bd)">
+              <span class="linka">‹ Modify Filters</span>
+              <span style="font-size:13px"><b>Showing 1–60</b> <span style="color:var(--i6)">of 1,240 results</span></span>
+              <div style="flex:1"></div>
+              <button class="btn sm out" style="border-color:var(--bd);color:var(--i6)">Save Search</button>
+              <div class="seg" style="background:#EFEBE6"><button style="padding:7px 14px;background:transparent;box-shadow:none;color:var(--i6)">List</button><button class="on" style="padding:7px 14px">Grid</button></div>
+              <button class="btn sm pri">Bulk Actions ▾</button>
+            </div>
+            <div class="content">
+              <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:16px" id="gridWrap"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= STONE DETAIL (M3) ================= -->
+        <section class="screen" id="s-detail">
+          <div class="vp">
+            <div class="pnav"><div class="lg"><span class="mk"></span><span class="nm">SEYAA SOLITAIRE</span></div><div class="navi"><a class="">Home</a><a class="on">Lab-Grown Diamonds</a><a class="">Saved Searches</a><a class="">Favorites</a><a class="">My Requests</a></div><div class="grow"></div><span class="navcart">🛒 Cart · 3</span><div class="acct"><span class="av"></span>Rajesh Traders</div></div>
+            <div style="padding:16px 26px 4px"><span class="linka">‹ Back to results</span></div>
+            <div class="content" style="padding-top:8px">
+              <div class="detail">
+                <div>
+                  <div class="media-main gembox">
+                    <div class="media-tools"><i>⤢</i><i>↗</i><i>♡</i></div>
+                    <svg width="180" viewBox="0 0 24 20" fill="none" style="display:block;color:#CFC7BF"><path d="M5 2H19L23 8L12 19L1 8Z" fill="currentColor"/><path d="M5 2L8 8M19 2L16 8M1 8H23M9 2L12 8L15 2M12 8H8M12 8H16M12 8V19" stroke="#fff" stroke-width=".5" opacity=".45"/></svg>
+                  </div>
+                  <div class="rail-thumbs">
+                    <div class="thumb on"><svg width="24" viewBox="0 0 24 20" fill="none" style="display:block;color:#CFC7BF"><path d="M5 2H19L23 8L12 19L1 8Z" fill="currentColor"/><path d="M5 2L8 8M19 2L16 8M1 8H23M9 2L12 8L15 2M12 8H8M12 8H16M12 8V19" stroke="#fff" stroke-width=".5" opacity=".45"/></svg><span>Photo</span></div>
+                    <div class="thumb"><svg width="24" viewBox="0 0 24 20" fill="none" style="display:block;color:#CFC7BF"><path d="M5 2H19L23 8L12 19L1 8Z" fill="currentColor"/><path d="M5 2L8 8M19 2L16 8M1 8H23M9 2L12 8L15 2M12 8H8M12 8H16M12 8V19" stroke="#fff" stroke-width=".5" opacity=".45"/></svg><span>Video ▶</span></div>
+                    <div class="thumb"><svg width="24" viewBox="0 0 24 20" fill="none" style="display:block;color:#CFC7BF"><path d="M5 2H19L23 8L12 19L1 8Z" fill="currentColor"/><path d="M5 2L8 8M19 2L16 8M1 8H23M9 2L12 8L15 2M12 8H8M12 8H16M12 8V19" stroke="#fff" stroke-width=".5" opacity=".45"/></svg><span>Certificate</span></div>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:16px">
+                  <div class="card">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:12px;color:var(--i4)">Stock #</span><b style="font-size:13px">SEY-CN133-22A</b><div style="flex:1"></div><span class="badge" style="background:var(--okbg);color:#227A54"><span class="dot" style="background:var(--ok)"></span>Available</span></div>
+                    <div style="font-size:26px;font-weight:700">Round 3.23ct E VVS2</div>
+                    <div style="font-size:13px;color:var(--i6);margin-top:4px">Lab-Grown · IGI Certified · CVD · Mumbai, India</div>
+                    <div style="display:flex;align-items:center;gap:12px;margin-top:14px"><span style="font-size:30px;font-weight:700;color:var(--b)" class="tnum">$278</span><span style="font-size:13px;color:var(--i4)">total</span><span style="width:1px;height:20px;background:var(--bd)"></span><span style="font-size:14px;font-weight:600;color:var(--i6)" class="tnum">$86 / ct</span></div>
+                  </div>
+                  <div class="card">
+                    <div class="chd"><h3>Product Details</h3></div>
+                    <div class="spec-grid" id="specGrid"></div>
+                  </div>
+                  <div class="card">
+                    <div class="chd"><h3>Comments</h3></div>
+                    <p style="margin:0;font-size:13px;color:var(--i6);line-height:1.6">This laboratory-grown diamond was created via the Chemical Vapor Deposition (CVD) process. Type IIa. Fully IGI certified; certificate available in the media panel.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="foot">
+              <div><div style="font-size:13px;font-weight:600">Round 3.23ct E VVS2</div><div style="font-size:12px;color:var(--i6)">$278 total · Available now</div></div>
+              <div style="flex:1"></div>
+              <button class="btn">Enquire</button>
+              <button class="btn out">Hold</button>
+              <button class="btn out">Memo</button>
+              <button class="btn pri">＋ Add to Cart</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= BUY ================= -->
+        <section class="screen" id="s-buy">
+          <div class="vp"><div class="content" style="padding:26px">
+            <div class="page-title"><h2>Your Cart</h2><p>Selected stones — create an Order ID and our team follows up. No online payment.</p></div>
+            <div class="detail" style="grid-template-columns:1.4fr 1fr">
+              <div class="card" style="padding:0;overflow:hidden">
+                <div style="display:flex;align-items:center;padding:14px 20px;border-bottom:1px solid var(--hair)"><b style="font-size:14px">3 stones in cart</b><span class="linka" style="margin-left:auto">Clear all</span></div>
+                <div style="display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--hair)"><svg width="26" height="22" viewBox="0 0 40 34" fill="none" stroke="#B9AFA6" stroke-width="1.4" stroke-linejoin="round" style="flex:0 0 auto"><circle cx="20" cy="17" r="13"/><polygon points="25,17 20,23 15,17 20,11" fill="#F1ECE6"/><path d="M20 4v7M33 17h-6M20 30v-7M7 17h6" opacity=".5"/></svg><div><div style="font-weight:600;font-size:13px">Round 3.23ct E VVS2</div><div style="font-size:12px;color:var(--i6)">SEY-CN133-22A · IGI · Mumbai</div></div><div style="margin-left:auto;text-align:right"><div style="font-weight:700" class="tnum">$278</div><div style="font-size:11px;color:var(--i4)">indicative</div></div><span style="color:var(--i4);cursor:pointer;font-size:16px">✕</span></div><div style="display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--hair)"><svg width="26" height="22" viewBox="0 0 40 34" fill="none" stroke="#B9AFA6" stroke-width="1.4" stroke-linejoin="round" style="flex:0 0 auto"><circle cx="20" cy="17" r="13"/><polygon points="25,17 20,23 15,17 20,11" fill="#F1ECE6"/><path d="M20 4v7M33 17h-6M20 30v-7M7 17h6" opacity=".5"/></svg><div><div style="font-weight:600;font-size:13px">Round 3.20ct E VVS2</div><div style="font-size:12px;color:var(--i6)">SEY-2201 · IGI · Mumbai</div></div><div style="margin-left:auto;text-align:right"><div style="font-weight:700" class="tnum">$278</div><div style="font-size:11px;color:var(--i4)">indicative</div></div><span style="color:var(--i4);cursor:pointer;font-size:16px">✕</span></div><div style="display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--hair)"><svg width="26" height="22" viewBox="0 0 40 34" fill="none" stroke="#B9AFA6" stroke-width="1.4" stroke-linejoin="round" style="flex:0 0 auto"><circle cx="20" cy="17" r="13"/><polygon points="25,17 20,23 15,17 20,11" fill="#F1ECE6"/><path d="M20 4v7M33 17h-6M20 30v-7M7 17h6" opacity=".5"/></svg><div><div style="font-weight:600;font-size:13px">Oval 3.02ct F VS1</div><div style="font-size:12px;color:var(--i6)">SEY-2206 · IGI · Mumbai</div></div><div style="margin-left:auto;text-align:right"><div style="font-weight:700" class="tnum">$224</div><div style="font-size:11px;color:var(--i4)">indicative</div></div><span style="color:var(--i4);cursor:pointer;font-size:16px">✕</span></div>
+                <div style="padding:16px 20px;display:flex;align-items:center"><span style="font-size:12px;color:var(--i6)">Add more from search or your Favorites</span><span class="linka" style="margin-left:auto">+ Add stones</span></div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:16px">
+                <div class="card">
+                  <div class="chd"><h3>Order summary</h3></div>
+                  <div style="display:flex;flex-direction:column;gap:10px">
+                    <div class="line"><span class="k">Stones</span><span class="v tnum">3</span></div>
+                    <div class="line"><span class="k">Indicative value</span><span class="v tnum">$780</span></div>
+                    <div class="line" style="padding-top:10px;border-top:1px solid var(--hair)"><span class="k" style="color:var(--i6)">Final pricing</span><span class="v" style="font-weight:600">Confirmed by salesperson</span></div>
+                  </div>
+                  <div class="callout" style="margin-top:14px"><span>ⓘ</span><span>Creating an Order ID emails the order &amp; stone details to the Seyaa team, who assign a salesperson to follow up. Prices are indicative until confirmed.</span></div>
+                  <button class="btn pri" style="justify-content:center;margin-top:14px;width:100%">Create Order ID →</button>
+                </div>
+                <div class="confirm" style="max-width:none;margin:0">
+                  <div class="ch" style="background:#F6FBF8"><div class="ic" style="background:var(--ok)">✓</div><div><div style="font-weight:700;font-size:15px">Order created</div><div style="font-size:12px;color:var(--i6)">After you click “Create Order ID”</div></div></div>
+                  <div class="cb">
+                    <div style="text-align:center;background:#FBF7F2;border:1px solid var(--bd);border-radius:12px;padding:16px"><div style="font-size:12px;color:var(--i6)">Your Order ID</div><div style="font-size:24px;font-weight:700;letter-spacing:.5px" class="tnum">#SEY-ORD-2026-0142</div></div>
+                    <div class="line"><span class="k">Emailed to</span><span class="v">Seyaa admin team</span></div>
+                    <div class="line"><span class="k">Next step</span><span class="v">Salesperson assigned to follow up</span></div>
+                    <div style="display:flex;gap:12px"><button class="btn" style="flex:1;justify-content:center">Continue browsing</button><button class="btn pri" style="flex:1;justify-content:center">View in My Requests</button></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div></div>
+        </section>
+
+        <!-- ================= MEMO ================= -->
+        <section class="screen" id="s-memo">
+          <div class="vp"><div class="content" style="padding:40px 26px">
+            <div class="confirm">
+              <div class="ch"><div class="ic" style="background:var(--memo)">⇄</div><div><div style="font-weight:700;font-size:16px">Request on Memo (Consignment)</div><div style="font-size:12.5px;color:var(--i6)">Hold the stone with your client, pay only if you keep it.</div></div></div>
+              <div class="cb">
+                <div style="display:flex;gap:14px;align-items:center;padding-bottom:16px;border-bottom:1px solid var(--hair)">
+                  <div class="gembox" style="width:64px;height:56px;border-radius:10px"><svg width="24" viewBox="0 0 24 20" fill="none" style="display:block;color:#CFC7BF"><path d="M5 2H19L23 8L12 19L1 8Z" fill="currentColor"/><path d="M5 2L8 8M19 2L16 8M1 8H23M9 2L12 8L15 2M12 8H8M12 8H16M12 8V19" stroke="#fff" stroke-width=".5" opacity=".45"/></svg></div>
+                  <div><div style="font-weight:700;font-size:14px">Round 3.23ct E VVS2</div><div style="font-size:12px;color:var(--i6)">SEY-CN133-22A · Value $278</div></div>
+                  <div style="margin-left:auto"><span class="badge" style="background:#EAF1F9;color:#2C6AA6"><span class="dot" style="background:var(--memo)"></span>Memo</span></div>
+                </div>
+                <div class="row2">
+                  <div class="lfield"><label style="font-size:12.5px;font-weight:600;color:var(--i6)">Memo period</label><div class="sel-box" style="justify-content:space-between">7 days <span style="color:var(--i4)">▾</span></div></div>
+                  <div class="lfield"><label style="font-size:12.5px;font-weight:600;color:var(--i6)">Return by</label><div class="sel-box">31 Jul 2026</div></div>
+                </div>
+                <div class="lfield"><label style="font-size:12.5px;font-weight:600;color:var(--i6)">Note to Seyaa (optional)</label><div class="field" style="min-height:64px;color:var(--i4)">Showing to a retail client in Surat this week…</div></div>
+                <div class="callout"><span>ⓘ</span><span>Memo requests are reviewed &amp; approved by the Seyaa admin team. You'll be notified once confirmed; the stone shows as <b>On Memo</b> to others meanwhile.</span></div>
+                <div style="display:flex;gap:12px"><button class="btn" style="flex:1;justify-content:center">Cancel</button><button class="btn pri" style="flex:2;justify-content:center;background:var(--memo)">Send Memo Request</button></div>
+              </div>
+            </div>
+          </div></div>
+        </section>
+
+        <!-- ================= HOLD ================= -->
+        <section class="screen" id="s-hold">
+          <div class="vp"><div class="content" style="padding:40px 26px">
+            <div class="confirm">
+              <div class="ch"><div class="ic" style="background:var(--hold)">⏱</div><div><div style="font-weight:700;font-size:16px">Hold / Reserve Stone</div><div style="font-size:12.5px;color:var(--i6)">Lock this stone for a set time while you decide.</div></div></div>
+              <div class="cb">
+                <div style="display:flex;gap:14px;align-items:center;padding-bottom:16px;border-bottom:1px solid var(--hair)">
+                  <div class="gembox" style="width:64px;height:56px;border-radius:10px"><svg width="24" viewBox="0 0 24 20" fill="none" style="display:block;color:#CFC7BF"><path d="M5 2H19L23 8L12 19L1 8Z" fill="currentColor"/><path d="M5 2L8 8M19 2L16 8M1 8H23M9 2L12 8L15 2M12 8H8M12 8H16M12 8V19" stroke="#fff" stroke-width=".5" opacity=".45"/></svg></div>
+                  <div><div style="font-weight:700;font-size:14px">Round 3.23ct E VVS2</div><div style="font-size:12px;color:var(--i6)">SEY-CN133-22A · $278</div></div>
+                  <div style="margin-left:auto"><span class="badge" style="background:#FBF1DE;color:#8a6410"><span class="dot" style="background:var(--hold)"></span>On Hold</span></div>
+                </div>
+                <div class="lfield"><label style="font-size:12.5px;font-weight:600;color:var(--i6)">Hold duration</label>
+                  <div class="wrap"><span class="chip">4 hours</span><span class="chip sel">24 hours</span><span class="chip">48 hours</span></div>
+                </div>
+                <div style="text-align:center;background:#FBF7F2;border:1px solid var(--bd);border-radius:12px;padding:18px">
+                  <div style="font-size:12px;color:var(--i6)">Reserved until</div>
+                  <div style="font-size:26px;font-weight:700;letter-spacing:-.5px">Tomorrow, 10:08 AM</div>
+                  <div style="font-size:12px;color:var(--hold);font-weight:600;margin-top:4px">⏱ 23h 59m remaining</div>
+                </div>
+                <div style="display:flex;gap:12px"><button class="btn" style="flex:1;justify-content:center">Cancel</button><button class="btn pri" style="flex:2;justify-content:center;background:var(--hold)">Confirm Hold</button></div>
+              </div>
+            </div>
+          </div></div>
+        </section>
+
+        <!-- ================= MY ACCOUNT ================= -->
+        <section class="screen" id="s-account">
+          <div class="vp">
+            <div class="pnav"><div class="lg"><span class="mk"></span><span class="nm">SEYAA SOLITAIRE</span></div><div class="navi"><a class="">Home</a><a class="">Lab-Grown Diamonds</a><a class="">Saved Searches</a><a class="">Favorites</a><a class="on">My Requests</a></div><div class="grow"></div><span class="navcart">🛒 Cart · 3</span><div class="acct"><span class="av"></span>Rajesh Traders</div></div>
+            <div class="content">
+              <div class="page-title"><h2>My Account</h2><p>Rajesh Traders · Trade account · Mumbai</p></div>
+              <div class="atabs"><button class="on">My Orders</button><button>My Memos</button><button>My Holds</button><button>Favorites</button><button>Saved Searches</button></div>
+              <div class="stats" style="grid-template-columns:repeat(4,1fr)">
+                <div class="stat"><div class="lb">Open orders</div><div class="big tnum">3</div><div class="dl" style="color:var(--i6)">$1,204 in flight</div></div>
+                <div class="stat"><div class="lb">On memo</div><div class="big tnum">2</div><div class="dl" style="color:var(--hold)">1 returns in 3 days</div></div>
+                <div class="stat"><div class="lb">Active holds</div><div class="big tnum">1</div><div class="dl" style="color:var(--i6)">expires in 23h</div></div>
+                <div class="stat"><div class="lb">Favorites</div><div class="big tnum">18</div><div class="dl up">+4 this week</div></div>
+              </div>
+              <div class="tbl-wrap">
+                <table class="tbl" style="min-width:820px">
+                  <thead><tr><th>Order</th><th>Stone</th><th>Ref</th><th>Total</th><th>Placed</th><th>Status</th><th></th></tr></thead>
+                  <tbody id="ordersBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= ADMIN: DASHBOARD ================= -->
+        <section class="screen" id="s-dash">
+          <div class="vp">
+            <div class="pnav"><div class="lg"><span class="mk"></span><span class="nm">SEYAA SOLITAIRE</span><span style="font-size:10px;font-weight:700;letter-spacing:1px;background:#3A2E24;color:#E4B98A;padding:3px 8px;border-radius:6px;margin-left:2px">ADMIN</span></div><div class="navi"><a class="on">Dashboard</a><a class="">Inventory</a><a class="">Upload</a><a class="">Approvals</a><a class="">Customers</a></div><div class="grow"></div><div class="acct"><span class="av"></span>Admin · Deval</div></div>
+            <div class="content">
+              <div class="page-title"><h2>Dashboard</h2><p>Inventory &amp; requests at a glance · updated 2 min ago</p></div>
+              <div class="stats">
+                <div class="stat"><div class="lb"><span class="dot" style="background:var(--ok)"></span>Stones in stock</div><div class="big tnum">1,240</div><div class="dl up">▲ 62 added today</div></div>
+                <div class="stat"><div class="lb"><span class="dot" style="background:var(--hold)"></span>On hold / memo</div><div class="big tnum">37</div><div class="dl" style="color:var(--i6)">14 hold · 23 memo</div></div>
+                <div class="stat"><div class="lb"><span class="dot" style="background:var(--b)"></span>Pending requests</div><div class="big tnum">9</div><div class="dl" style="color:var(--b)">needs action</div></div>
+                <div class="stat"><div class="lb"><span class="dot" style="background:var(--sold)"></span>Sold this month</div><div class="big tnum">148</div><div class="dl up">▲ 12% vs last</div></div>
+              </div>
+              <div class="row2" style="grid-template-columns:1.5fr 1fr">
+                <div class="card">
+                  <div class="chd"><h3>Requests needing action</h3><span class="linka" style="margin-left:auto">View all</span></div>
+                  <div class="tbl-wrap" style="border:0">
+                    <table class="tbl" style="min-width:520px">
+                      <thead><tr><th>Type</th><th>Customer</th><th>Stone</th><th>Value</th><th>Age</th><th></th></tr></thead>
+                      <tbody id="dashReqBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+                <div class="card">
+                  <div class="chd"><h3>Stock by shape</h3></div>
+                  <div id="barWrap" style="display:flex;flex-direction:column;gap:12px"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= ADMIN: STOCK UPLOAD ================= -->
+        <section class="screen" id="s-upload">
+          <div class="vp">
+            <div class="pnav"><div class="lg"><span class="mk"></span><span class="nm">SEYAA SOLITAIRE</span><span style="font-size:10px;font-weight:700;letter-spacing:1px;background:#3A2E24;color:#E4B98A;padding:3px 8px;border-radius:6px;margin-left:2px">ADMIN</span></div><div class="navi"><a class="">Dashboard</a><a class="">Inventory</a><a class="on">Upload</a><a class="">Approvals</a><a class="">Customers</a></div><div class="grow"></div><div class="acct"><span class="av"></span>Admin · Deval</div></div>
+            <div class="content">
+              <div style="display:flex;align-items:center"><div class="page-title"><h2>Upload Stock</h2><p>Import your inventory Excel — map columns once, publish in seconds.</p></div>
+              <div class="steps" style="margin-left:auto"><span class="st on"><span class="n">1</span>Upload</span><span>›</span><span class="st on"><span class="n">2</span>Map columns</span><span>›</span><span class="st"><span class="n">3</span>Validate</span><span>›</span><span class="st"><span class="n">4</span>Publish</span></div></div>
+
+              <div class="card">
+                <div class="dropzone">
+                  <div class="ic" style="font-size:22px">⭱</div>
+                  <div style="font-weight:600;font-size:14px">Drop your stock file here, or <span class="linka">browse</span></div>
+                  <div style="font-size:12px;color:var(--i6)">.xlsx, .xls or .csv · up to 10 MB · last import: Seyaa_stock_24Jul.xlsx (1,240 rows)</div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="chd"><h3>Map columns</h3><span class="note">1,240 rows detected · 22 columns</span></div>
+                <div style="display:flex;flex-direction:column;gap:10px" id="mapWrap"></div>
+              </div>
+            </div>
+            <div class="foot"><span style="font-size:12.5px;color:var(--i6)"><b style="color:var(--ok)">✓ 20 mapped</b> · 2 optional unmapped</span><div style="flex:1"></div><button class="btn">Back</button><button class="btn pri">Validate &amp; Preview →</button></div>
+          </div>
+        </section>
+
+        <!-- ================= ADMIN: INVENTORY ================= -->
+        <section class="screen" id="s-inventory">
+          <div class="vp">
+            <div class="pnav"><div class="lg"><span class="mk"></span><span class="nm">SEYAA SOLITAIRE</span><span style="font-size:10px;font-weight:700;letter-spacing:1px;background:#3A2E24;color:#E4B98A;padding:3px 8px;border-radius:6px;margin-left:2px">ADMIN</span></div><div class="navi"><a class="">Dashboard</a><a class="on">Inventory</a><a class="">Upload</a><a class="">Approvals</a><a class="">Customers</a></div><div class="grow"></div><div class="acct"><span class="av"></span>Admin · Deval</div></div>
+            <div style="display:flex;align-items:center;gap:14px;padding:16px 26px;background:var(--surf);border-bottom:1px solid var(--bd)">
+              <div class="page-title"><h2 style="font-size:18px">Inventory</h2></div>
+              <div class="field" style="display:flex;align-items:center;gap:8px;width:280px;margin-left:12px"><span style="color:var(--i4)">⌕</span><span style="color:var(--i4)">Search ref, shape, cert…</span></div>
+              <div style="flex:1"></div>
+              <button class="btn sm out" style="border-color:var(--bd);color:var(--i6)">Filters</button>
+              <button class="btn sm out" style="border-color:var(--bd);color:var(--i6)">Export</button>
+              <button class="btn sm pri">+ Add Stone</button>
+            </div>
+            <div class="content">
+              <div class="tbl-wrap">
+                <table class="tbl">
+                  <thead><tr><th>Ref</th><th>Shape</th><th>Ct</th><th>Col</th><th>Clar</th><th>Cut</th><th>Lab</th><th>Cost</th><th>List $/ct</th><th>Total</th><th>Media</th><th>Status</th><th></th></tr></thead>
+                  <tbody id="invBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= ADMIN: APPROVALS ================= -->
+        <section class="screen" id="s-approvals">
+          <div class="vp">
+            <div class="pnav"><div class="lg"><span class="mk"></span><span class="nm">SEYAA SOLITAIRE</span><span style="font-size:10px;font-weight:700;letter-spacing:1px;background:#3A2E24;color:#E4B98A;padding:3px 8px;border-radius:6px;margin-left:2px">ADMIN</span></div><div class="navi"><a class="">Dashboard</a><a class="">Inventory</a><a class="">Upload</a><a class="on">Approvals</a><a class="">Customers</a></div><div class="grow"></div><div class="acct"><span class="av"></span>Admin · Deval</div></div>
+            <div class="content">
+              <div class="page-title"><h2>Requests &amp; Approvals</h2><p>Approve or decline incoming Buy, Memo &amp; Hold requests.</p></div>
+              <div class="atabs"><button class="on">All <span style="opacity:.6">9</span></button><button>Orders <span style="opacity:.6">3</span></button><button>Memo <span style="opacity:.6">4</span></button><button>Hold <span style="opacity:.6">2</span></button></div>
+              <div style="display:flex;flex-direction:column;gap:12px" id="apprWrap"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= ADMIN: CUSTOMERS ================= -->
+        <section class="screen" id="s-customers">
+          <div class="vp">
+            <div class="pnav"><div class="lg"><span class="mk"></span><span class="nm">SEYAA SOLITAIRE</span><span style="font-size:10px;font-weight:700;letter-spacing:1px;background:#3A2E24;color:#E4B98A;padding:3px 8px;border-radius:6px;margin-left:2px">ADMIN</span></div><div class="navi"><a class="">Dashboard</a><a class="">Inventory</a><a class="">Upload</a><a class="">Approvals</a><a class="on">Customers</a></div><div class="grow"></div><div class="acct"><span class="av"></span>Admin · Deval</div></div>
+            <div class="content">
+              <div style="display:flex;align-items:center"><div class="page-title"><h2>Customers</h2><p>Approve trade applications &amp; manage accounts.</p></div>
+              <button class="btn sm pri" style="margin-left:auto">+ Invite Customer</button></div>
+              <div class="card" style="padding:0;overflow:hidden">
+                <div style="padding:14px 20px;background:#FBF4EF;border-bottom:1px solid #F1D9C9;display:flex;align-items:center;gap:10px;font-size:12.5px;color:#7a4a2c"><span class="badge" style="background:var(--b);color:#fff">2 pending</span> New trade applications awaiting approval</div>
+                <div class="tbl-wrap" style="border:0">
+                  <table class="tbl" style="min-width:820px">
+                    <thead><tr><th>Company</th><th>Contact</th><th>GST / Reg</th><th>Location</th><th>Applied</th><th>Status</th><th></th></tr></thead>
+                    <tbody id="custBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const EMBLEM="";
+/* ---------- shared builders ---------- */
+const gemSVG=(cls="gem",w=22)=>`<svg class="${cls}" width="${w}" viewBox="0 0 24 20" fill="none" style="display:block"><path d="M5 2H19L23 8L12 19L1 8Z" fill="currentColor"/><path d="M5 2L8 8M19 2L16 8M1 8H23M9 2L12 8L15 2M12 8L8 8M12 8L16 8M12 8V19" stroke="#fff" stroke-width=".5" opacity=".45"/></svg>`;
+document.querySelectorAll('[data-gembig]');
+/* replace gem placeholders after injection handled in HTML via tokens */
+
+/* SHAPES */
+const shapeIcons={
+ Round:'<path d="M20 3 21.2 3.1 22.4 3.2 23.6 3.5 24.8 3.8 25.9 4.3 27 4.9 28 5.5 29 6.3 29.9 7.1 30.7 8 31.5 9 32.1 10 32.7 11.1 33.2 12.2 33.5 13.4 33.8 14.6 33.9 15.8 34 17 33.9 18.2 33.8 19.4 33.5 20.6 33.2 21.8 32.7 22.9 32.1 24 31.5 25 30.7 26 29.9 26.9 29 27.7 28 28.5 27 29.1 25.9 29.7 24.8 30.2 23.6 30.5 22.4 30.8 21.2 30.9 20 31 18.8 30.9 17.6 30.8 16.4 30.5 15.2 30.2 14.1 29.7 13 29.1 12 28.5 11 27.7 10.1 26.9 9.3 26 8.5 25 7.9 24 7.3 22.9 6.8 21.8 6.5 20.6 6.2 19.4 6.1 18.2 6 17 6.1 15.8 6.2 14.6 6.5 13.4 6.8 12.2 7.3 11.1 7.9 10 8.5 9 9.3 8 10.1 7.1 11 6.3 12 5.5 13 4.9 14.1 4.3 15.2 3.8 16.4 3.5 17.6 3.2 18.8 3.1Z" fill="var(--gb)" stroke="currentColor"/><polygon points="20,9.3 25.4,11.6 27.7,17 25.4,22.4 20,24.7 14.6,22.4 12.3,17 14.6,11.6" fill="var(--gt)" stroke="currentColor"/><path d="M20 9.3 20 3M25.4 4.1 20 9.3M25.4 4.1 25.4 11.6M25.4 11.6 29.9 7.1M32.9 11.6 25.4 11.6M32.9 11.6 27.7 17M27.7 17 34 17M32.9 22.4 27.7 17M32.9 22.4 25.4 22.4M25.4 22.4 29.9 26.9M25.4 29.9 25.4 22.4M25.4 29.9 20 24.7M20 24.7 20 31M14.6 29.9 20 24.7M14.6 29.9 14.6 22.4M14.6 22.4 10.1 26.9M7.1 22.4 14.6 22.4M7.1 22.4 12.3 17M12.3 17 6 17M7.1 11.6 12.3 17M7.1 11.6 14.6 11.6M14.6 11.6 10.1 7.1M14.6 4.1 14.6 11.6M14.6 4.1 20 9.3" fill="none" stroke="currentColor" opacity=".55"/>',
+ Oval:'<path d="M20 3 20.9 3.1 21.7 3.2 22.6 3.5 23.4 3.8 24.2 4.3 25 4.9 25.7 5.5 26.4 6.3 27.1 7.1 27.7 8 28.2 9 28.7 10 29.1 11.1 29.4 12.2 29.7 13.4 29.8 14.6 30 15.8 30 17 30 18.2 29.8 19.4 29.7 20.6 29.4 21.8 29.1 22.9 28.7 24 28.2 25 27.7 26 27.1 26.9 26.4 27.7 25.7 28.5 25 29.1 24.2 29.7 23.4 30.2 22.6 30.5 21.7 30.8 20.9 30.9 20 31 19.1 30.9 18.3 30.8 17.4 30.5 16.6 30.2 15.8 29.7 15 29.1 14.3 28.5 13.6 27.7 12.9 26.9 12.3 26 11.8 25 11.3 24 10.9 22.9 10.6 21.8 10.3 20.6 10.2 19.4 10 18.2 10 17 10 15.8 10.2 14.6 10.3 13.4 10.6 12.2 10.9 11.1 11.3 10 11.8 9 12.3 8 12.9 7.1 13.6 6.3 14.3 5.5 15 4.9 15.8 4.3 16.6 3.8 17.4 3.5 18.3 3.2 19.1 3.1Z" fill="var(--gb)" stroke="currentColor"/><polygon points="20,9.3 23.9,11.6 25.5,17 23.9,22.4 20,24.7 16.1,22.4 14.5,17 16.1,11.6" fill="var(--gt)" stroke="currentColor"/><path d="M20 9.3 20 3M23.8 4.1 20 9.3M23.8 4.1 23.9 11.6M23.9 11.6 27.1 7.1M29.2 11.6 23.9 11.6M29.2 11.6 25.5 17M25.5 17 30 17M29.2 22.4 25.5 17M29.2 22.4 23.9 22.4M23.9 22.4 27.1 26.9M23.8 29.9 23.9 22.4M23.8 29.9 20 24.7M20 24.7 20 31M16.2 29.9 20 24.7M16.2 29.9 16.1 22.4M16.1 22.4 12.9 26.9M10.8 22.4 16.1 22.4M10.8 22.4 14.5 17M14.5 17 10 17M10.8 11.6 14.5 17M10.8 11.6 16.1 11.6M16.1 11.6 12.9 7.1M16.2 4.1 16.1 11.6M16.2 4.1 20 9.3" fill="none" stroke="currentColor" opacity=".55"/>',
+ Pear:'<path d="M20 3 C25 10 29 15 29 20 A9 9 0 1 1 11 20 C11 15 15 10 20 3 Z" fill="var(--gb)" stroke="currentColor"/><path d="M20 11 C22.5 14 24 16.5 24 19 A4 4 0 1 1 16 19 C16 16.5 17.5 14 20 11 Z" fill="var(--gt)" stroke="currentColor"/><path d="M20 3 20 11M16 18 12 23M24 18 28 23M20 23 20 29M16 17 11 20M24 17 29 20M20 11 14 12M20 11 26 12" fill="none" stroke="currentColor" opacity=".5"/>',
+ Cushion:'<path d="M32.5 17 32.5 19.2 32.4 20.6 32.2 21.8 32 22.8 31.7 23.8 31.3 24.6 30.8 25.4 30.3 26.1 29.8 26.8 29.1 27.3 28.4 27.8 27.6 28.3 26.8 28.7 25.8 29 24.8 29.2 23.6 29.4 22.2 29.5 20 29.5 17.8 29.5 16.4 29.4 15.2 29.2 14.2 29 13.2 28.7 12.4 28.3 11.6 27.8 10.9 27.3 10.2 26.8 9.7 26.1 9.2 25.4 8.7 24.6 8.3 23.8 8 22.8 7.8 21.8 7.6 20.6 7.5 19.2 7.5 17 7.5 14.8 7.6 13.4 7.8 12.2 8 11.2 8.3 10.2 8.7 9.4 9.2 8.6 9.7 7.9 10.2 7.2 10.9 6.7 11.6 6.2 12.4 5.7 13.2 5.3 14.2 5 15.2 4.8 16.4 4.6 17.8 4.5 20 4.5 22.2 4.5 23.6 4.6 24.8 4.8 25.8 5 26.8 5.3 27.6 5.7 28.4 6.2 29.1 6.7 29.8 7.2 30.3 7.9 30.8 8.6 31.3 9.4 31.7 10.2 32 11.2 32.2 12.2 32.4 13.4 32.5 14.8Z" fill="var(--gb)" stroke="currentColor"/><polygon points="26.9,17 25.4,22.4 20,23.9 14.6,22.4 13.1,17 14.6,11.6 20,10.1 25.4,11.6" fill="var(--gt)" stroke="currentColor"/><path d="M26.9 17 32.5 17M31.8 23.3 26.9 17M31.8 23.3 25.4 22.4M25.4 22.4 29.8 26.8M26.3 28.8 25.4 22.4M26.3 28.8 20 23.9M20 23.9 20 29.5M13.7 28.8 20 23.9M13.7 28.8 14.6 22.4M14.6 22.4 10.2 26.8M8.2 23.3 14.6 22.4M8.2 23.3 13.1 17M13.1 17 7.5 17M8.2 10.7 13.1 17M8.2 10.7 14.6 11.6M14.6 11.6 10.2 7.2M13.7 5.2 14.6 11.6M13.7 5.2 20 10.1M20 10.1 20 4.5M26.3 5.2 20 10.1M26.3 5.2 25.4 11.6M25.4 11.6 29.8 7.2M31.8 10.7 25.4 11.6M31.8 10.7 26.9 17" fill="none" stroke="currentColor" opacity=".55"/>',
+ Emerald:'<polygon points="13,4 27,4 32,9 32,25 27,30 13,30 8,25 8,9" fill="var(--gb)" stroke="currentColor"/><polygon points="16,8 24,8 28,12 28,22 24,26 16,26 12,22 12,12" fill="none" stroke="currentColor"/><polygon points="18,12 22,12 25,15 25,19 22,22 18,22 15,19 15,15" fill="var(--gt)" stroke="currentColor"/><path d="M32 9 28 12M28 12 25 15M8 9 12 12M12 12 15 15M32 25 28 22M28 22 25 19M8 25 12 22M12 22 15 19" fill="none" stroke="currentColor" opacity=".5"/>',
+ Radiant:'<polygon points="13,3 27,3 33,9 33,25 27,31 13,31 7,25 7,9" fill="var(--gb)" stroke="currentColor"/><polygon points="16,10 24,10 27,13 27,21 24,24 16,24 13,21 13,13" fill="var(--gt)" stroke="currentColor"/><path d="M16 10 13 3M24 10 27 3M27 13 33 9M27 21 33 25M24 24 27 31M16 24 13 31M13 21 7 25M13 13 7 9M16 10 24 24M24 10 16 24" fill="none" stroke="currentColor" opacity=".5"/>',
+ Princess:'<polygon points="6,3 34,3 34,31 6,31" fill="var(--gb)" stroke="currentColor"/><polygon points="13,10 27,10 27,24 13,24" fill="var(--gt)" stroke="currentColor"/><path d="M6 3 13 10M34 3 27 10M34 31 27 24M6 31 13 24M6 3 34 31M34 3 6 31M20 3 13 10M20 3 27 10M34 17 27 10M34 17 27 24M20 31 13 24M20 31 27 24M6 17 13 10M6 17 13 24" fill="none" stroke="currentColor" opacity=".5"/>',
+ Asscher:'<polygon points="12,3 28,3 33,8 33,26 28,31 12,31 7,26 7,8" fill="var(--gb)" stroke="currentColor"/><polygon points="16,8 24,8 28,12 28,22 24,26 16,26 12,22 12,12" fill="none" stroke="currentColor"/><polygon points="18,12 22,12 24,14 24,20 22,22 18,22 16,20 16,14" fill="var(--gt)" stroke="currentColor"/><path d="M33 8 28 12M28 12 24 14M7 8 12 12M12 12 16 14M33 26 28 22M28 22 24 20M7 26 12 22M12 22 16 20M16 14 24 20M24 14 16 20" fill="none" stroke="currentColor" opacity=".5"/>',
+ Marquise:'<path d="M20 3 C26 9 30 13 30 17 C30 21 26 25 20 31 C14 25 10 21 10 17 C10 13 14 9 20 3 Z" fill="var(--gb)" stroke="currentColor"/><path d="M20 11 C23 13.5 24 15.5 24 17 C24 18.5 23 20.5 20 23 C17 20.5 16 18.5 16 17 C16 15.5 17 13.5 20 11 Z" fill="var(--gt)" stroke="currentColor"/><path d="M20 3 20 11M20 31 20 23M10 17 16 17M30 17 24 17M20 11 13 11M20 11 27 11M20 23 13 23M20 23 27 23M16 17 13 11M24 17 27 11M16 17 13 23M24 17 27 23" fill="none" stroke="currentColor" opacity=".5"/>',
+ Heart:'<path d="M20 30 C7 21 5 12 10 8 C14 4.8 18 8 20 11 C22 8 26 4.8 30 8 C35 12 33 21 20 30 Z" fill="var(--gb)" stroke="currentColor"/><path d="M20 24 C13 19 12 14 14.5 12 C16.5 10.4 19 12 20 14 C21 12 23.5 10.4 25.5 12 C28 14 27 19 20 24 Z" fill="var(--gt)" stroke="currentColor"/><path d="M20 11 20 14M20 24 20 30M8.5 12 14.5 12M31.5 12 25.5 12M12 18 20 24M28 18 20 24M14.5 12 11 9M25.5 12 29 9" fill="none" stroke="currentColor" opacity=".5"/>',
+ Trilliant:'<path d="M20 4 L33 27 Q33.5 28 32.5 28 L7.5 28 Q6.5 28 7 27 Z" fill="var(--gb)" stroke="currentColor"/><polygon points="20,12 27,24 13,24" fill="var(--gt)" stroke="currentColor"/><path d="M20 12 20 4M27 24 32.5 28M13 24 7.5 28M20 12 7.5 28M20 12 32.5 28M27 24 20 4M13 24 20 4M20 24 20 12" fill="none" stroke="currentColor" opacity=".5"/>',
+ Baguette:'<polygon points="13,3 27,3 27,31 13,31" fill="var(--gb)" stroke="currentColor"/><polygon points="16,7 24,7 24,27 16,27" fill="none" stroke="currentColor"/><polygon points="18,11 22,11 22,23 18,23" fill="var(--gt)" stroke="currentColor"/><path d="M13 3 16 7M27 3 24 7M27 31 24 27M13 31 16 27M16 7 18 11M24 7 22 11M24 27 22 23M16 27 18 23" fill="none" stroke="currentColor" opacity=".5"/>',
+ Square:'<polygon points="6,3 34,3 34,31 6,31" fill="var(--gb)" stroke="currentColor"/><polygon points="14,11 26,11 26,23 14,23" fill="var(--gt)" stroke="currentColor"/><path d="M6 3 14 11M34 3 26 11M34 31 26 23M6 31 14 23M6 3 34 31M34 3 6 31M20 3 14 11M20 3 26 11M20 31 14 23M20 31 26 23" fill="none" stroke="currentColor" opacity=".5"/>',
+ Hexagon:'<polygon points="20,3 33,10.5 33,23.5 20,31 7,23.5 7,10.5" fill="var(--gb)" stroke="currentColor"/><polygon points="20,11 27,15 27,19 20,23 13,19 13,15" fill="var(--gt)" stroke="currentColor"/><path d="M20 11 20 3M27 15 33 10.5M27 19 33 23.5M20 23 20 31M13 19 7 23.5M13 15 7 10.5M26.5 6.8 27 15M26.5 27.2 27 19M13.5 27.2 13 19M13.5 6.8 13 15" fill="none" stroke="currentColor" opacity=".5"/>',
+ 'Rose Cut':'<circle cx="20" cy="17" r="14" fill="var(--gb)" stroke="currentColor"/><polygon points="26,17 24.5,21.6 20,23.5 15.5,21.6 14,17 15.5,12.4 20,10.5 24.5,12.4" fill="var(--gt)" stroke="currentColor"/><path d="M26 17 34 17M34 17 24.5 21.6M24.5 21.6 30.9 26.9M30.9 26.9 20 23.5M20 23.5 20 31M20 31 15.5 21.6M15.5 21.6 9.1 26.9M9.1 26.9 14 17M14 17 6 17M6 17 15.5 12.4M15.5 12.4 9.1 7.1M9.1 7.1 20 10.5M20 10.5 20 3M20 3 24.5 12.4M24.5 12.4 30.9 7.1M30.9 7.1 26 17" fill="none" stroke="currentColor" opacity=".5"/>'
+};
+const shapes=Object.keys(shapeIcons);
+const sw=document.getElementById('shapeWrap');
+if(sw){shapes.forEach((s,i)=>{const on=i===0;const d=document.createElement('div');d.className='chip'+(on?' sel':'');d.style.flexDirection='column';d.style.width='88px';d.style.padding='13px 6px';d.style.gap='7px';d.style.justifyContent='center';const stroke=on?'#C0551A':'#6E645B',gb=on?'#FCEFE6':'#FFFFFF',gt=on?'#F8E6DA':'#F1ECE6';d.innerHTML=`<svg class="gicon" width="34" height="29" viewBox="0 0 40 34" fill="none" stroke-linejoin="round" stroke-linecap="round" style="color:${stroke};--gb:${gb};--gt:${gt}">${shapeIcons[s]}</svg><span>${s}</span>`;sw.appendChild(d);});const m=document.createElement('div');m.className='chip';m.style.width='88px';m.style.height='auto';m.style.justifyContent='center';m.style.color='var(--b)';m.style.fontWeight='600';m.textContent='+15 more';sw.appendChild(m);}
+
+const fill=(id,arr,selIdx,cls="chip")=>{const w=document.getElementById(id);if(!w)return;arr.forEach((v,i)=>{const c=document.createElement('span');c.className=cls+(i===selIdx?' sel':'')+' wide';c.innerHTML=v;w.appendChild(c);});};
+fill('caratWrap',["0.30-0.39","0.40-0.49","0.50-0.69","0.70-0.89","0.90-0.99","1.00-1.49","1.50-1.99","2.00-2.99","3.00-3.99","4.00-4.99","5.00-5.99","10+"],8);
+fill('colorWrap',["D","E","F","G","H","I","J","K","L","M","N","O","P","Q"],1);
+fill('clarityWrap',["FL","IF","VVS1","VVS2","VS1","VS2","SI1","SI2","SI3","I1","I2","I3"],3);
+fill('fluorWrap',["None","Faint","Medium","Strong","V Strong"],0);
+fill('labWrap',["IGI","GIA","GCAL","SGL","Other","None"],0);
+/* CPS grade rows */
+const cps=document.getElementById('cpsWrap');
+if(cps){["Cut","Polish","Symmetry"].forEach(l=>{const r=document.createElement('div');r.style.display='flex';r.style.alignItems='center';r.style.gap='10px';r.innerHTML=`<b style="width:70px;font-size:12px;color:var(--i6);font-weight:600">${l}</b>`;const w=document.createElement('div');w.className='wrap';["8X","Ideal","Excellent","Very Good","Good","Fair","Poor"].forEach((g,i)=>{const c=document.createElement('span');c.className='chip'+(i===2?' sel':'');c.textContent=g;w.appendChild(c);});r.appendChild(w);cps.appendChild(r);});}
+/* measurements */
+const meas=document.getElementById('measWrap');
+if(meas){["Depth, %","Table, %","Ratio","Length, mm","Width, mm","Depth, mm"].forEach(l=>{const g=document.createElement('div');g.innerHTML=`<div style="font-size:12px;font-weight:600;color:var(--i6);margin-bottom:7px">${l}</div><div style="display:flex;gap:6px;align-items:center"><div class="field" style="flex:1"><div class="lb">Min</div></div><span style="color:var(--i4)">›</span><div class="field" style="flex:1"><div class="lb">Max</div></div></div>`;meas.appendChild(g);});}
+
+/* LIST rows */
+const stC={Available:'var(--ok)',Hold:'var(--hold)',Memo:'var(--memo)',Sold:'var(--sold)'};
+const listData=[
+ {sel:1,fav:1,st:'Available',ref:'SEY-CN133-22A',sh:'Round',ct:'3.23',c:'E',cl:'VVS2',cu:'Excellent',p:'Excellent',sy:'Excellent',f:'None',loc:'Mumbai',pc:'$86',t:'$278'},
+ {st:'Available',ref:'SEY-2201',sh:'Round',ct:'3.20',c:'E',cl:'VVS2',cu:'Ideal',p:'Excellent',sy:'Excellent',f:'None',loc:'Mumbai',pc:'$87',t:'$278'},
+ {st:'Hold',ref:'SEY-2202',sh:'Round',ct:'3.20',c:'E',cl:'VVS2',cu:'Excellent',p:'Excellent',sy:'Excellent',f:'None',loc:'Surat',pc:'$87',t:'$278'},
+ {fav:1,st:'Available',ref:'SEY-2203',sh:'Round',ct:'3.20',c:'E',cl:'VVS2',cu:'Ideal',p:'Excellent',sy:'Excellent',f:'None',loc:'Mumbai',pc:'$87',t:'$278'},
+ {st:'Memo',ref:'SEY-2204',sh:'Round',ct:'3.24',c:'E',cl:'VVS2',cu:'Excellent',p:'Excellent',sy:'Excellent',f:'None',loc:'Mumbai',pc:'$86',t:'$279'},
+ {st:'Available',ref:'SEY-2205',sh:'Round',ct:'3.21',c:'E',cl:'VVS1',cu:'Excellent',p:'Excellent',sy:'Excellent',f:'Faint',loc:'Surat',pc:'$88',t:'$281'},
+ {st:'Available',ref:'SEY-2206',sh:'Oval',ct:'3.02',c:'F',cl:'VS1',cu:'Excellent',p:'Excellent',sy:'Very Good',f:'None',loc:'Mumbai',pc:'$74',t:'$224'},
+ {st:'Sold',ref:'SEY-2207',sh:'Cushion',ct:'3.51',c:'E',cl:'VVS2',cu:'Excellent',p:'Excellent',sy:'Excellent',f:'None',loc:'Mumbai',pc:'$79',t:'$277'},
+ {fav:1,st:'Available',ref:'SEY-2208',sh:'Round',ct:'3.20',c:'D',cl:'VVS1',cu:'Ideal',p:'Excellent',sy:'Excellent',f:'None',loc:'Surat',pc:'$92',t:'$294'},
+];
+const lb=document.getElementById('listBody');
+if(lb)listData.forEach(d=>{const tr=document.createElement('tr');if(d.sel)tr.className='sel';tr.innerHTML=
+ `<td><span style="display:inline-block;width:15px;height:15px;border-radius:4px;border:1.5px solid ${d.sel?'var(--b)':'var(--bd)'};background:${d.sel?'var(--b)':'#fff'}"></span></td>
+  <td><span class="hicon${d.fav?' fav':''}">${d.fav?'♥':'♡'}</span></td>
+  <td><span style="display:inline-flex;align-items:center;gap:6px"><span class="dot" style="background:${stC[d.st]}"></span>${d.st}</span></td>
+  <td class="ref">${d.ref}</td><td>${d.sh}</td><td class="tnum">${d.ct}</td><td>${d.c}</td><td>${d.cl}</td><td>${d.cu}</td><td>${d.p}</td><td>${d.sy}</td><td>${d.f}</td><td>IGI</td><td>${d.loc}</td><td class="tnum">${d.pc}</td><td class="tot tnum">${d.t}</td>
+  <td><span class="linka">View</span></td>`;lb.appendChild(tr);});
+
+/* GRID cards */
+const gridData=[
+ {st:'Available',fav:1,ref:'SEY-CN133-22A',sp:'Round · 3.23ct · E · VVS2',t:'$278',pc:'$86'},
+ {st:'Available',ref:'SEY-2201',sp:'Round · 3.20ct · E · VVS2',t:'$278',pc:'$87'},
+ {st:'Hold',ref:'SEY-2202',sp:'Round · 3.20ct · E · VVS2',t:'$278',pc:'$87'},
+ {st:'Available',ref:'SEY-2203',sp:'Round · 3.20ct · E · VVS2',t:'$278',pc:'$87'},
+ {st:'Memo',ref:'SEY-2204',sp:'Round · 3.24ct · E · VVS2',t:'$279',pc:'$86'},
+ {st:'Available',fav:1,ref:'SEY-2206',sp:'Oval · 3.02ct · F · VS1',t:'$224',pc:'$74'},
+ {st:'Sold',ref:'SEY-2207',sp:'Cushion · 3.51ct · E · VVS2',t:'$277',pc:'$79'},
+ {st:'Available',ref:'SEY-2208',sp:'Round · 3.20ct · D · VVS1',t:'$294',pc:'$92'},
+ {st:'Available',ref:'SEY-2209',sp:'Pear · 2.51ct · F · VS2',t:'$188',pc:'$75'},
+ {st:'Available',ref:'SEY-2210',sp:'Emerald · 3.10ct · E · VVS1',t:'$266',pc:'$86'},
+];
+const gw=document.getElementById('gridWrap');
+if(gw)gridData.forEach(d=>{const c=document.createElement('div');c.style.cssText='background:#fff;border:1px solid var(--bd);border-radius:12px;overflow:hidden';
+ c.innerHTML=`<div class="gembox" style="height:150px;position:relative">${gemSVG('gem',54)}
+   <span class="badge" style="position:absolute;top:10px;left:10px;background:#fff"><span class="dot" style="background:${stC[d.st]}"></span>${d.st}</span>
+   <span style="position:absolute;top:10px;right:10px;width:28px;height:28px;border-radius:50%;background:#fff;display:grid;place-items:center;color:${d.fav?'var(--b)':'var(--i4)'}">${d.fav?'♥':'♡'}</span></div>
+   <div style="padding:13px 14px;display:flex;flex-direction:column;gap:8px">
+     <div style="font-weight:600;font-size:13px">${d.ref}</div>
+     <div style="font-size:12px;color:var(--i6)">${d.sp}</div>
+     <div style="display:flex;align-items:center;gap:6px"><b style="font-size:16px" class="tnum">${d.t}</b><span style="font-size:11px;color:var(--i4)" class="tnum">${d.pc}/ct</span><span style="margin-left:auto;font-size:10px;font-weight:600;color:var(--i6)">IGI</span></div>
+     <div style="display:flex;gap:8px"><button class="btn sm" style="flex:1;justify-content:center">Details</button><button class="btn sm pri" style="flex:1;justify-content:center">＋ Cart</button></div>
+   </div>`;gw.appendChild(c);});
+
+/* SPEC grid */
+const specs=[['Lab','IGI'],['Depth','62.8%'],['Report #','808617578'],['Table','59%'],['Shape','Round'],['Girdle','Med–Sl. Thick'],['Carat','3.23'],['Crown','15.0° / 36.1°'],['Color','E'],['Pavilion','43.5% / 41.0°'],['Clarity','VVS2'],['Culet','None'],['Cut','Excellent'],['Meas','9.39×9.34×5.88'],['Polish','Excellent'],['Ratio','1.01'],['Symmetry','Excellent'],['BGM','None'],['Fluor','None'],['Treatment','None'],['Location','Mumbai, India'],['Growth Type','CVD']];
+const sg=document.getElementById('specGrid');
+if(sg)specs.forEach(([k,v])=>{const d=document.createElement('div');d.className='sr';d.innerHTML=`<span class="k">${k}</span><span class="v">${v}</span>`;sg.appendChild(d);});
+
+/* ORDERS */
+const orders=[['#SEY-ORD-0142','3 stones · Round 3.23 +2','—','$780','24 Jul','Assigned — Priya','var(--memo)'],['#SEY-ORD-0138','Oval 3.02ct F VS1','SEY-2206','$224','22 Jul','Quoted','var(--hold)'],['#SEY-ORD-0131','Round 3.20ct D VVS1','SEY-2208','$294','19 Jul','Confirmed','var(--ok)']];
+const ob=document.getElementById('ordersBody');
+if(ob)orders.forEach(o=>{const tr=document.createElement('tr');tr.innerHTML=`<td class="ref">${o[0]}</td><td>${o[1]}</td><td>${o[2]}</td><td class="tot tnum">${o[3]}</td><td>${o[4]}</td><td><span class="badge" style="background:#F2EFEC;color:${o[6]}"><span class="dot" style="background:${o[6]}"></span>${o[5]}</span></td><td><span class="linka">Track</span></td>`;ob.appendChild(tr);});
+
+/* DASH requests */
+const dreq=[['Order','#ORD-0142 · Rajesh','3 stones','$780','8m','var(--b)'],['Memo','Kiran Gems','Oval 3.02 F VS1','$224','22m','var(--memo)'],['Hold','Shah &amp; Co','Cushion 3.51 E','$277','1h','var(--hold)'],['Memo','Arham Diam','Round 3.20 D','$294','2h','var(--memo)']];
+const drb=document.getElementById('dashReqBody');
+if(drb)dreq.forEach(r=>{const tr=document.createElement('tr');tr.innerHTML=`<td><span class="badge" style="background:#F2EFEC;color:${r[5]}"><span class="dot" style="background:${r[5]}"></span>${r[0]}</span></td><td class="ref">${r[1]}</td><td>${r[2]}</td><td class="tot tnum">${r[3]}</td><td>${r[4]}</td><td><span class="linka">Review</span></td>`;drb.appendChild(tr);});
+/* bars */
+const bars=[['Round',72],['Oval',13],['Cushion',6],['Emerald',4],['Pear',3],['Other',2]];
+const bw=document.getElementById('barWrap');
+if(bw)bars.forEach(([l,v])=>{const d=document.createElement('div');d.innerHTML=`<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:var(--i6)">${l}</span><b class="tnum">${v}%</b></div><div style="height:8px;background:#F0ECE7;border-radius:6px;overflow:hidden"><div style="width:${v}%;height:100%;background:var(--b);border-radius:6px"></div></div>`;bw.appendChild(d);});
+
+/* MAP rows */
+const maps=[['Stock #','Column A · "SR NO"','Seyaa Ref'],['Shape','Column C · "SHAPE"','Shape'],['Carat','Column D · "CTS"','Carat'],['Color','Column E · "COLOR"','Color'],['Clarity','Column F · "CLARITY"','Clarity'],['Cut / Pol / Sym','Column G–I','Cut, Polish, Symmetry'],['Lab + Report#','Column J · "IGI NO"','Lab / Report'],['Price / ct','Column P · "RATE"','Price per ct']];
+const mw=document.getElementById('mapWrap');
+if(mw)maps.forEach(m=>{const r=document.createElement('div');r.className='map-row';r.innerHTML=`<div><div class="xl">${m[1]}</div><div class="sub">Your spreadsheet</div></div><div style="text-align:center;color:var(--b)">→</div><div class="sel-box" style="justify-content:space-between">${m[2]} <span style="color:var(--i4)">▾</span></div><span class="badge" style="background:var(--okbg);color:#227A54"><span class="dot" style="background:var(--ok)"></span>Mapped</span>`;mw.appendChild(r);});
+
+/* INVENTORY */
+const inv=[
+ ['SEY-CN133-22A','Round','3.23','E','VVS2','EX','IGI','$210','$86','$278','●●●','Available','var(--ok)'],
+ ['SEY-2201','Round','3.20','E','VVS2','ID','IGI','$212','$87','$278','●●○','Available','var(--ok)'],
+ ['SEY-2202','Round','3.20','E','VVS2','EX','IGI','$210','$87','$278','●●●','On Hold','var(--hold)'],
+ ['SEY-2204','Round','3.24','E','VVS2','EX','IGI','$208','$86','$279','●●○','On Memo','var(--memo)'],
+ ['SEY-2207','Cushion','3.51','E','VVS2','EX','IGI','$195','$79','$277','●○○','Sold','var(--sold)'],
+ ['SEY-2208','Round','3.20','D','VVS1','ID','IGI','$228','$92','$294','●●●','Available','var(--ok)'],
+];
+const ib=document.getElementById('invBody');
+if(ib)inv.forEach(r=>{const tr=document.createElement('tr');tr.innerHTML=`<td class="ref">${r[0]}</td><td>${r[1]}</td><td class="tnum">${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${r[5]}</td><td>${r[6]}</td><td class="tnum">${r[7]}</td><td class="tnum">${r[8]}</td><td class="tot tnum">${r[9]}</td><td style="letter-spacing:2px;color:var(--b)">${r[10]}</td><td><span class="badge" style="background:#F2EFEC;color:${r[12]}"><span class="dot" style="background:${r[12]}"></span>${r[11]}</span></td><td><span class="linka">Edit</span></td>`;ib.appendChild(tr);});
+
+/* APPROVALS */
+const appr=[
+ ['Order','var(--b)','#SEY-ORD-0142 · Rajesh Traders','3 stones · Round 3.23 E VVS2, +2 more','','$780','New order — assign a salesperson','8 min ago'],
+ ['Memo','var(--memo)','Kiran Gems','Oval 3.02ct F VS1','SEY-2206','$224','7-day memo · returns 31 Jul','22 min ago'],
+ ['Hold','var(--hold)','Shah & Co','Cushion 3.51ct E VVS2','SEY-2207','$277','24h hold','1 hour ago'],
+ ['Order','var(--b)','#SEY-ORD-0141 · Arham Diam','2 stones · Round 3.20 D VVS1, +1','','$588','Assigned — Priya S.','2 hours ago'],
+];
+const aw=document.getElementById('apprWrap');
+if(aw)appr.forEach(a=>{const isOrder=a[0]==='Order';const c=document.createElement('div');c.className='card';c.style.padding='16px 20px';
+ const btns=isOrder?`<button class="btn sm">View stones</button><button class="btn sm pri">Assign to Salesperson ▾</button>`:`<button class="btn sm">View stone</button><button class="btn sm out" style="border-color:var(--sold);color:var(--sold)">Decline</button><button class="btn sm pri" style="background:var(--ok)">Approve</button>`;
+ c.innerHTML=`<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+    <span class="badge" style="background:#F2EFEC;color:${a[1]}"><span class="dot" style="background:${a[1]}"></span>${a[0]}</span>
+    <div><div style="font-weight:600;font-size:13.5px">${a[2]}</div><div style="font-size:12px;color:var(--i6)">${a[3]}${a[4]?' · '+a[4]:''}</div></div>
+    <div style="margin-left:auto;text-align:right"><div style="font-weight:700" class="tnum">${a[5]}</div><div style="font-size:11px;color:var(--i4)">${a[7]}</div></div>
+    <div style="width:100%;display:flex;align-items:center;gap:10px;border-top:1px solid var(--hair);padding-top:12px;margin-top:2px"><span style="font-size:12px;color:var(--i6)">${a[6]}</span><div style="flex:1"></div>${btns}</div>
+  </div>`;aw.appendChild(c);});
+
+/* CUSTOMERS */
+const cust=[
+ ['Kiran Gems','Kiran Patel · +91 98••','GST 24ABCDE••','Surat','24 Jul','Pending','var(--hold)'],
+ ['Blue Star Diam','A. Mehta · +91 90••','GST 27FGHIJ••','Mumbai','23 Jul','Pending','var(--hold)'],
+ ['Rajesh Traders','Rajesh S. · +91 99••','GST 27KLMNO••','Mumbai','12 Jun','Approved','var(--ok)'],
+ ['Arham Diam','—','GST 24PQRST••','Surat','02 Jun','Approved','var(--ok)'],
+ ['Stavya Exports','—','GST 24UVWXY••','Surat','20 May','Suspended','var(--sold)'],
+];
+const cb=document.getElementById('custBody');
+if(cb)cust.forEach(c=>{const tr=document.createElement('tr');const pend=c[5]==='Pending';tr.innerHTML=`<td class="ref">${c[0]}</td><td>${c[1]}</td><td>${c[2]}</td><td>${c[3]}</td><td>${c[4]}</td><td><span class="badge" style="background:#F2EFEC;color:${c[6]}"><span class="dot" style="background:${c[6]}"></span>${c[5]}</span></td><td>${pend?'<span class="linka">Approve</span>':'<span class="linka">Manage</span>'}</td>`;cb.appendChild(tr);});
+
+/* inject gem placeholders left in markup tokens */
+document.querySelectorAll('[data-gem]').forEach(e=>{e.innerHTML=gemSVG('gem',e.dataset.gem*1||22);});
+
+/* ---------- navigation ---------- */
+const crumbs={login:'Login / Request Access',filter:'Filter & Search — Module 1',list:'Results — List — Module 2',grid:'Results — Grid — Module 2',detail:'Stone Detail — Module 3',buy:'Cart & Create Order',memo:'Memo — Consignment',hold:'Hold — Reserve',account:'My Account',dash:'Admin · Dashboard',upload:'Admin · Stock Upload',inventory:'Admin · Inventory',approvals:'Admin · Requests & Approvals',customers:'Admin · Customers'};
+const urls={login:'login',filter:'search',list:'search/results',grid:'search/results?view=grid',detail:'stone/SEY-CN133-22A',buy:'cart',memo:'memo/new',hold:'hold/new',account:'account/orders',dash:'admin',upload:'admin/upload',inventory:'admin/inventory',approvals:'admin/approvals',customers:'admin/customers'};
+function show(s){
+  document.querySelectorAll('.screen').forEach(x=>x.classList.remove('on'));
+  document.getElementById('s-'+s).classList.add('on');
+  document.querySelectorAll('.rail a').forEach(a=>a.classList.toggle('on',a.dataset.s===s));
+  document.getElementById('crumb').textContent=crumbs[s];
+  document.getElementById('urlbar').textContent='app.seyaasolitaire.com/'+urls[s];
+  document.querySelector('.stage').scrollIntoView({block:'start'});
+}
+document.querySelectorAll('.rail a').forEach(a=>a.addEventListener('click',()=>show(a.dataset.s)));
+
+/* theme toggle */
+const tb2=document.getElementById('themeBtn');
+tb2.addEventListener('click',()=>{const r=document.documentElement;const cur=r.getAttribute('data-theme')|| (matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');const nx=cur==='dark'?'light':'dark';r.setAttribute('data-theme',nx);});
+
+function loginTab(t){document.getElementById('signin-pane').style.display=t==='signin'?'flex':'none';document.getElementById('request-pane').style.display=t==='request'?'flex':'none';document.getElementById('tabSignin').classList.toggle('on',t==='signin');document.getElementById('tabRequest').classList.toggle('on',t==='request');}
+</script>
+</body>
+</html>
