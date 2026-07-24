@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { issueOtp } from "@/lib/otp";
 import { sendMail, adminEmail } from "@/lib/mailer";
@@ -23,6 +24,7 @@ export async function POST(req: Request) {
       mobile: d.mobile,
       companyName: d.companyName,
       gstNumber: d.gstNumber,
+      passwordHash: await bcrypt.hash(d.password, 10),
       status: "PENDING",
       kycDocuments: {
         create: [

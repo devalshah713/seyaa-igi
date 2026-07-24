@@ -5,12 +5,15 @@ export const requestAccessSchema = z.object({
   lastName: z.string().min(1),
   email: z.string().email(),
   mobile: z.string().min(6),
+  password: z.string().min(8),
   companyName: z.string().optional(),
   gstNumber: z.string().optional(),
   // File uploads are handled separately (multipart → object storage); URLs land here.
   aadhaarUrl: z.string().url(),
   gstUrl: z.string().url().optional(),
 });
+
+export const setPasswordSchema = z.object({ password: z.string().min(8) });
 
 export const otpSendSchema = z.object({
   email: z.string().email(),

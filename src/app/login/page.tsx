@@ -59,7 +59,7 @@ function SignIn({ onSwitch }: { onSwitch: () => void }) {
 }
 
 function RequestAccess() {
-  const [f, setF] = useState({ firstName: "", lastName: "", email: "", mobile: "" });
+  const [f, setF] = useState({ firstName: "", lastName: "", email: "", mobile: "", password: "" });
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [verified, setVerified] = useState(false);
@@ -87,6 +87,7 @@ function RequestAccess() {
   }
   async function submit() {
     if (!verified) return setMsg({ t: "err", m: "Verify your email first." });
+    if (f.password.length < 8) return setMsg({ t: "err", m: "Choose a password of at least 8 characters." });
     if (!aadhaarUrl) return setMsg({ t: "err", m: "Aadhaar upload is required for KYC." });
     setBusy(true);
     const res = await fetch("/api/auth/request-access", {
@@ -123,6 +124,10 @@ function RequestAccess() {
       )}
       {verified && <div className="msg ok">✓ Email verified</div>}
       <div className="lfield"><label>Mobile number</label><input value={f.mobile} onChange={(e) => set("mobile", e.target.value)} placeholder="+91 98 76 54 32 10" /></div>
+      <div className="lfield"><label>Create password (min 8 characters)</label>
+        <input type="password" value={f.password} onChange={(e) => set("password", e.target.value)} placeholder="••••••••" />
+        <div style={{ fontSize: 11.5, color: "var(--i6)", marginTop: 4 }}>You'll use this with your email to sign in once approved.</div>
+      </div>
       <div className="lfield"><label>Aadhaar card (required · KYC)</label>
         <input type="file" accept="application/pdf,image/*" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0], "kyc", setAadhaarUrl)} />
         {aadhaarUrl && <div className="msg ok" style={{ marginTop: 6 }}>Aadhaar uploaded ✓</div>}

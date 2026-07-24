@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { CustomerDecision } from "@/components/admin-actions";
+import { CustomerDecision, SetPassword } from "@/components/admin-actions";
 
 const color: Record<string, string> = { PENDING: "var(--hold)", APPROVED: "var(--ok)", REJECTED: "var(--sold)", SUSPENDED: "var(--sold)" };
 
@@ -26,7 +26,7 @@ export default async function AdminCustomers() {
                   <a key={d.id} className="linka" href={d.fileUrl} target="_blank" rel="noopener" style={{ marginRight: 8 }}>{d.type}</a>
                 ))}</td>
                 <td><span className="badge" style={{ background: "#f2efec", color: color[c.status] }}><span className="dot" style={{ background: color[c.status] }} />{c.status}</span></td>
-                <td>{c.status === "PENDING" ? <CustomerDecision id={c.id} /> : "—"}</td>
+                <td>{c.status === "PENDING" ? <CustomerDecision id={c.id} /> : c.status === "APPROVED" ? <SetPassword id={c.id} /> : "—"}</td>
               </tr>
             ))}
           </tbody>

@@ -25,6 +25,38 @@ export function CustomerDecision({ id }: { id: string }) {
   );
 }
 
+export function SetPassword({ id }: { id: string }) {
+  const [open, setOpen] = useState(false);
+  const [pw, setPw] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  async function save() {
+    if (pw.length < 8) return setMsg("Min 8 characters.");
+    setBusy(true); setMsg(null);
+    const res = await fetch(`/api/admin/customers/${id}/set-password`, {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: pw }),
+    });
+    const d = await res.json();
+    setBusy(false);
+    if (res.ok) { setMsg("Password set ✓"); setPw(""); }
+    else setMsg(d.error || "Failed");
+  }
+
+  if (!open) {
+    return <button className="btn sm out" onClick={() => setOpen(true)}>Set password</button>;
+  }
+  return (
+    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+      <input type="text" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="New password (min 8)"
+        style={{ border: "1px solid var(--bd)", borderRadius: 8, padding: "8px 10px", fontSize: 12, background: "#f6f4f2", width: 180 }} />
+      <button className="btn sm pri" disabled={busy} onClick={save}>{busy ? "Saving…" : "Save"}</button>
+      <button className="btn sm out" onClick={() => { setOpen(false); setMsg(null); }}>Cancel</button>
+      {msg && <span style={{ fontSize: 12, color: msg.includes("✓") ? "var(--ok)" : "var(--sold)" }}>{msg}</span>}
+    </div>
+  );
+}
+
 export function RequestDecision({ id }: { id: string }) {
   const refresh = useRefresh();
   const [busy, setBusy] = useState(false);
