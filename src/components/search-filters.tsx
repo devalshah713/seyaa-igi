@@ -14,6 +14,12 @@ const SHAPES = ["Round", "Oval", "Pear", "Cushion", "Emerald", "Radiant", "Princ
 const COLORS = ["D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q"];
 const CLARITY = ["FL", "IF", "VVS1", "VVS2", "VS1", "VS2", "SI1", "SI2", "SI3", "I1", "I2", "I3"];
 const GRADES = ["Ideal", "Excellent", "Very Good", "Good", "Fair", "Poor"];
+// Quick presets that set Cut, Polish & Symmetry together.
+const CPS_PRESETS: [string, string[]][] = [
+  ["8X", ["Excellent"]],                          // triple Excellent
+  ["3X+", ["Ideal", "Excellent"]],                // Excellent & better
+  ["3VG+", ["Ideal", "Excellent", "Very Good"]],  // Very Good & better
+];
 const FLUOR: [string, string][] = [["None", "None"], ["Faint", "Faint"], ["Medium", "Medium"], ["Strong", "Strong"], ["V Strong", "Very Strong"]];
 const CARAT_PRESETS: [string, string, string][] = [
   ["0.30", "0.39", "0.30–0.39"], ["0.40", "0.49", "0.40–0.49"], ["0.50", "0.69", "0.50–0.69"],
@@ -74,6 +80,12 @@ export default function SearchFilters({ facets }: { facets: Facets }) {
     });
   }
   const chosen = (param: string) => sel[param] ?? [];
+  const sameSet = (a: string[], b: string[]) => a.length === b.length && b.every((x) => a.includes(x));
+  const cpsActive = (grades: string[]) => ["cut", "polish", "symmetry"].every((p) => sameSet(chosen(p), grades));
+  const toggleCps = (grades: string[]) => {
+    const active = cpsActive(grades);
+    setSel((s) => ({ ...s, cut: active ? [] : [...grades], polish: active ? [] : [...grades], symmetry: active ? [] : [...grades] }));
+  };
   const chip = (param: string, label: string, value?: string) => {
     const v = value ?? label;
     return <span key={label} className={`chip wide ${chosen(param).includes(v) ? "sel" : ""}`} onClick={() => toggle(param, v)}>{label}</span>;
@@ -167,15 +179,16 @@ export default function SearchFilters({ facets }: { facets: Facets }) {
         {/* Cut, Polish & Symmetry */}
         <div className="card">
           <div className="chd"><h3>Cut, Polish &amp; Symmetry</h3></div>
-          <div style={{ display: "flex", gap: 20, alignItems: "center", marginBottom: 16, flexWrap: "wrap" }}>
-            <span className="check"><span className="bx" />Hearts &amp; Arrows</span>
-            <span className="chip sel">8X</span><span className="chip">3X+</span><span className="chip">3VG+</span>
+          <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 16, flexWrap: "wrap" }}>
+            {CPS_PRESETS.map(([label, grades]) => (
+              <span key={label} className={`chip ${cpsActive(grades) ? "sel" : ""}`} onClick={() => toggleCps(grades)}>{label}</span>
+            ))}
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {([["Cut", "cut"], ["Polish", "polish"], ["Symmetry", "symmetry"]] as [string, string][]).map(([label, param]) => (
               <div className="cps-row" key={param}>
                 <b className="cps-lb">{label}</b>
-                <div className="wrap"><span className="chip">8X</span>{GRADES.map((g) => <span key={g} className={`chip ${chosen(param).includes(g) ? "sel" : ""}`} onClick={() => toggle(param, g)}>{g}</span>)}</div>
+                <div className="wrap">{GRADES.map((g) => <span key={g} className={`chip ${chosen(param).includes(g) ? "sel" : ""}`} onClick={() => toggle(param, g)}>{g}</span>)}</div>
               </div>
             ))}
           </div>
