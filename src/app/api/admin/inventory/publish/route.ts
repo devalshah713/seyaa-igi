@@ -3,6 +3,9 @@ import { requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { parseWorkbook, mapRowsToStones, STONE_FIELDS, type StoneField } from "@/lib/xlsx";
 
+// Allow a longer run for large sheets (thousands of rows).
+export const maxDuration = 60;
+
 // POST /api/admin/inventory/publish — multipart: `file` + `mapping` (JSON catalogField->column).
 // Validates and upserts stones by `ref`. Step 4 of the stock-upload pipeline.
 export async function POST(req: Request) {
@@ -29,27 +32,34 @@ export async function POST(req: Request) {
   const { rows } = parseWorkbook(Buffer.from(await file.arrayBuffer()));
   const { records, errors } = mapRowsToStones(rows, mapping);
 
-  let created = 0;
-  let updated = 0;
-  for (let i = 0; i < records.length; i++) {
-    const rec = records[i];
-    const ref = rec.ref as string;
+  // Drop duplicate refs within the sheet (keep first occurrence).
+  const seen = new Set<string>();
+  const unique = records.filter((r) => {
+    const ref = String(r.ref);
+    if (seen.has(ref)) return false;
+    seen.add(ref);
+    return true;
+  });
+
+  // Fast bulk insert in batches; skipDuplicates skips stones already in stock (by ref).
+  const BATCH = 500;
+  let imported = 0;
+  for (let i = 0; i < unique.length; i += BATCH) {
+    const batch = unique.slice(i, i + BATCH);
     try {
-      const existing = await db.stone.findUnique({ where: { ref }, select: { id: true } });
-      await db.stone.upsert({ where: { ref }, create: rec as never, update: rec as never });
-      existing ? updated++ : created++;
+      const res = await db.stone.createMany({ data: batch as never, skipDuplicates: true });
+      imported += res.count;
     } catch (e) {
-      // Skip a bad row instead of failing the whole import.
-      errors.push({ row: i + 2, message: e instanceof Error ? e.message.split("\n")[0].slice(0, 200) : "Row failed" });
+      errors.push({ row: i + 2, message: e instanceof Error ? e.message.split("\n")[0].slice(0, 200) : "Batch failed" });
     }
   }
 
   return NextResponse.json({
     ok: true,
     total: rows.length,
-    created,
-    updated,
-    skipped: errors.length,
+    imported,
+    alreadyInStock: unique.length - imported,
+    skippedInvalid: errors.length,
     errors: errors.slice(0, 50),
   });
 }

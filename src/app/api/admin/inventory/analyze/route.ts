@@ -18,20 +18,28 @@ export async function POST(req: Request) {
   // Suggest a mapping by loose name matching (e.g. "CTS" -> carat, "SHAPE" -> shape).
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z]/g, "");
   const hints: Record<string, string[]> = {
-    ref: ["stockno", "stockid", "stock", "srno", "lot", "packet", "stoneno", "ref"],
+    ref: ["lotno", "lot", "stockno", "stock", "packet", "stoneno", "srno", "ref"],
     shape: ["shape"],
-    carat: ["carat", "cts", "weight"],
+    carat: ["carat", "cts", "weight", "ct"],
     color: ["color", "colour", "col"],
-    clarity: ["clarity", "purity", "clar"],
+    clarity: ["clarity", "purity", "clar", "cla"],
     cut: ["cutgrade", "cut"],
     polish: ["polish", "pol"],
     symmetry: ["symmetry", "symm", "sym"],
-    fluorescence: ["fluorescence", "fluor", "flr"],
-    pricePerCt: ["rate", "pricepercarat", "perct", "ppc", "dollarct"],
-    totalPrice: ["totalamount", "totalprice", "netamount", "amount", "total", "value"],
-    reportNo: ["reportno", "certno", "certificateno", "igino", "report", "igi"],
+    fluorescence: ["fluorescence", "fluor", "flour", "flr", "fl"],
+    reportNo: ["certificateno", "certno", "reportno", "report", "cert", "igino"],
     location: ["location", "city", "itemloc"],
-    measurements: ["measurement", "meas"],
+    measurements: ["measurement", "diamter", "diameter", "dimension", "meas", "mm"],
+    depthPct: ["tdepth", "totaldepth", "depth"],
+    tablePct: ["table"],
+    ratio: ["lw", "lbyw", "ratio"],
+    costPrice: ["cost", "purchase", "buyprice"],
+    pricePerCt: ["rate", "pricepercarat", "perct", "ppc", "dollarct"],
+    totalPrice: ["estamt", "amt", "totalamount", "totalprice", "netamount", "amount", "total"],
+    growthType: ["growth", "cvd", "hpht"],
+    treatment: ["treatment", "treated"],
+    mediaPhotoUrl: ["imagelink", "imageurl", "image", "photo", "picture", "still"],
+    mediaVideoUrl: ["videolink", "videourl", "video", "movie", "v360"],
   };
   const norm2 = (s: string) => norm(s);
   const suggested: Record<string, string> = {};

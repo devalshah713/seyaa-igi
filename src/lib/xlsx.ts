@@ -20,6 +20,7 @@ export const STONE_FIELDS = [
   "ref", "shape", "carat", "color", "clarity", "cut", "polish", "symmetry", "fluorescence",
   "reportNo", "growthType", "treatment", "location", "measurements",
   "depthPct", "tablePct", "ratio", "costPrice", "pricePerCt", "totalPrice", "status",
+  "mediaPhotoUrl", "mediaVideoUrl",
 ] as const;
 
 export type StoneField = (typeof STONE_FIELDS)[number];

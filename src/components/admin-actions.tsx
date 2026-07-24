@@ -91,7 +91,7 @@ export function ExcelUpload() {
     const fd = new FormData(); fd.append("file", file); fd.append("mapping", JSON.stringify(mapping));
     const res = await fetch("/api/admin/inventory/publish", { method: "POST", body: fd });
     const d = await res.json(); setBusy(false);
-    setResult(res.ok ? `Published: ${d.created} created, ${d.updated} updated, ${d.skipped} skipped.` : d.error || "Publish failed");
+    setResult(res.ok ? `Imported ${d.imported} stones · ${d.alreadyInStock} already in stock · ${d.skippedInvalid} skipped.` : d.error || "Publish failed");
   }
 
   return (
@@ -121,7 +121,7 @@ export function ExcelUpload() {
         </div>
       )}
 
-      {result && <div className={`msg ${result.startsWith("Published") ? "ok" : "err"}`}>{result}</div>}
+      {result && <div className={`msg ${result.startsWith("Imported") ? "ok" : "err"}`}>{result}</div>}
     </>
   );
 }
