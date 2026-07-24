@@ -18,7 +18,7 @@ a { color: inherit; text-decoration: none; }
 /* nav */
 .pnav { display: flex; align-items: center; gap: 26px; background: var(--dark); padding: 0 24px; height: 60px; color: #fff; }
 .pnav .lg { display: flex; align-items: center; gap: 9px; }
-.pnav .lg img { width: 22px; height: 22px; object-fit: contain; }
+.pnav .lg img { width: 40px; height: 40px; object-fit: contain; }
 .pnav .lg .nm { font-weight: 700; letter-spacing: 1.4px; font-size: 13.5px; }
 .pnav .navi { display: flex; gap: 22px; align-items: center; }
 .pnav .navi a { color: #b9afa6; font-size: 12.5px; font-weight: 500; }
