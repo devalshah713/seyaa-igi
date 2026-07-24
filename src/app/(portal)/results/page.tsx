@@ -2,6 +2,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import type { Prisma, StoneStatus } from "@prisma/client";
 import { AddToCart, ViewToggle } from "@/components/actions";
+import { StoneImage } from "@/components/stone-image";
 import { expandFilter } from "@/lib/facets";
 
 const STATUS_COLOR: Record<StoneStatus, string> = {
@@ -129,11 +130,11 @@ export default async function ResultsPage({
           <div className="cardgrid">
             {stones.map((s) => (
               <div key={s.id} className="scard">
-                <div className="gembox" style={{ height: 150, position: "relative" }}>
-                  <span className="badge" style={{ position: "absolute", top: 10, left: 10, background: "#fff" }}>
+                <div style={{ height: 150, position: "relative", overflow: "hidden" }}>
+                  <StoneImage stoneRef={s.ref} hasPhoto={!!s.mediaPhotoUrl} iconSize={40} />
+                  <span className="badge" style={{ position: "absolute", top: 10, left: 10, background: "#fff", zIndex: 1 }}>
                     <span className="dot" style={{ background: STATUS_COLOR[s.status] }} />{label[s.status]}
                   </span>
-                  <span style={{ fontSize: 40, color: "#cfc7bf" }}>◆</span>
                 </div>
                 <div style={{ padding: "13px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
                   <Link className="linka" href={`/stone/${s.ref}`} style={{ color: "var(--ink)", fontWeight: 600 }}>{s.ref}</Link>

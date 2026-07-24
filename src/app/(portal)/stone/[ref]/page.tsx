@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import type { StoneStatus } from "@prisma/client";
 import { AddToCart, RequestButton } from "@/components/actions";
+import { StoneImage } from "@/components/stone-image";
 import { normalizeField } from "@/lib/facets";
 
 const STATUS_COLOR: Record<StoneStatus, string> = {
@@ -40,7 +41,7 @@ export default async function StonePage({ params }: { params: Promise<{ ref: str
       <div className="content" style={{ paddingTop: 8 }}>
         <div className="detail">
           <div>
-            <div className="media-main gembox"><span style={{ fontSize: 120, color: "#cfc7bf" }}>◆</span></div>
+            <div className="media-main" style={{ position: "relative" }}><StoneImage stoneRef={s.ref} hasPhoto={!!s.mediaPhotoUrl} iconSize={120} /></div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div className="card">
