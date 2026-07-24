@@ -42,7 +42,7 @@ Auth-gated via a `(portal)` layout; `/admin/*` requires ADMIN/SALES.
 ### Setup
 
 ```bash
-cp .env.example .env         # set DATABASE_URL + SESSION_SECRET (+ SMTP for email)
+cp .env.example .env         # set POSTGRES_PRISMA_URL / POSTGRES_URL_NON_POOLING + SESSION_SECRET
 npm install
 npm run db:push              # create tables from prisma/schema.prisma
 npm run db:seed              # seed demo data
