@@ -16,8 +16,8 @@ function sortBy(values: string[], order: string[]) {
 }
 
 async function facet(field: "shape" | "color" | "clarity" | "cut" | "polish" | "symmetry" | "fluorescence" | "growthType" | "location") {
+  // No `where: { not: null }` — this Prisma version rejects it; filter nulls in JS instead.
   const rows = await db.stone.findMany({
-    where: { [field]: { not: null } },
     select: { [field]: true },
     distinct: [field],
   });
