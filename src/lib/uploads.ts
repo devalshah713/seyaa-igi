@@ -23,8 +23,16 @@ export async function storeUpload(file: File, folder = "misc"): Promise<string> 
     return url;
   }
 
-  const dir = path.join(process.cwd(), ".uploads", folder);
-  await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, safeName), bytes);
-  return `/api/uploads/${folder}/${safeName}`;
+  // Local-dev fallback (writable disk). On serverless the filesystem is read-only,
+  // so surface a clear message telling the admin to enable Blob storage.
+  try {
+    const dir = path.join(process.cwd(), ".uploads", folder);
+    await mkdir(dir, { recursive: true });
+    await writeFile(path.join(dir, safeName), bytes);
+    return `/api/uploads/${folder}/${safeName}`;
+  } catch {
+    throw new Error(
+      "File uploads aren't enabled yet. In Vercel: Storage → Create → Blob, then redeploy.",
+    );
+  }
 }

@@ -23,6 +23,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unsupported type (PDF/JPG/PNG only)" }, { status: 415 });
   }
 
-  const url = await storeUpload(file, folder.replace(/[^\w\-]/g, ""));
-  return NextResponse.json({ ok: true, url });
+  try {
+    const url = await storeUpload(file, folder.replace(/[^\w\-]/g, ""));
+    return NextResponse.json({ ok: true, url });
+  } catch (e) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Upload failed" }, { status: 500 });
+  }
 }
