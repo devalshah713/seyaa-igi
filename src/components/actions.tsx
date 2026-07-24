@@ -41,9 +41,14 @@ export function RemoveFromCart({ stoneId }: { stoneId: string }) {
       disabled={busy}
       title="Remove from cart"
       aria-label="Remove from cart"
-      style={{ background: "none", border: 0, cursor: "pointer", color: "var(--sold)", fontSize: 18, lineHeight: 1, padding: "4px 6px", opacity: busy ? 0.5 : 1 }}
+      style={{ background: "none", border: 0, cursor: "pointer", color: "var(--sold)", lineHeight: 0, padding: "4px 6px", opacity: busy ? 0.5 : 1 }}
     >
-      ✕
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 6h18" />
+        <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
+        <path d="M6 6l1 14a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-14" />
+        <path d="M10 11v6M14 11v6" />
+      </svg>
     </button>
   );
 }
