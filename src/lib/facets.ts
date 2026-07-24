@@ -141,6 +141,12 @@ function sortCanon(values: string[], order?: string[]) {
   return [...values].sort((a, b) => idx(a) - idx(b) || a.localeCompare(b));
 }
 
+// Clean a single stored value for display (e.g. "HK" → "Hong Kong", "CUSHION" → "Cushion").
+export function normalizeField(field: FacetField, raw: string | null | undefined): string {
+  if (!raw || !raw.trim()) return "—";
+  return NORMALIZERS[field](raw);
+}
+
 async function distinctRaw(field: FacetField): Promise<string[]> {
   const rows = await db.stone.findMany({ select: { [field]: true }, distinct: [field] });
   return rows

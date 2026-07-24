@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import type { StoneStatus } from "@prisma/client";
 import { AddToCart, RequestButton } from "@/components/actions";
+import { normalizeField } from "@/lib/facets";
 
 const STATUS_COLOR: Record<StoneStatus, string> = {
   AVAILABLE: "var(--ok)", HOLD: "var(--hold)", MEMO: "var(--memo)", SOLD: "var(--sold)",
@@ -15,15 +16,20 @@ export default async function StonePage({ params }: { params: Promise<{ ref: str
   if (!s) notFound();
 
   const specs: [string, string][] = [
-    ["Lab", s.lab], ["Depth", s.depthPct ? `${s.depthPct}%` : "—"],
-    ["Report #", s.reportNo ?? "—"], ["Table", s.tablePct ? `${s.tablePct}%` : "—"],
-    ["Shape", s.shape], ["Ratio", s.ratio ? String(s.ratio) : "—"],
-    ["Carat", String(s.carat)], ["Measurements", s.measurements ?? "—"],
-    ["Color", s.color ?? "—"], ["Growth Type", s.growthType ?? "—"],
-    ["Clarity", s.clarity ?? "—"], ["Treatment", s.treatment ?? "None"],
-    ["Cut", s.cut ?? "—"], ["Location", s.location ?? "—"],
-    ["Polish", s.polish ?? "—"], ["Fluorescence", s.fluorescence ?? "None"],
-    ["Symmetry", s.symmetry ?? "—"], ["Growth", s.growthType ?? "—"],
+    ["Lab", s.lab ?? "—"],
+    ["Report #", s.reportNo ?? "—"],
+    ["Shape", normalizeField("shape", s.shape)],
+    ["Carat", String(s.carat)],
+    ["Color", normalizeField("color", s.color)],
+    ["Clarity", normalizeField("clarity", s.clarity)],
+    ["Cut", normalizeField("cut", s.cut)],
+    ["Polish", normalizeField("polish", s.polish)],
+    ["Symmetry", normalizeField("symmetry", s.symmetry)],
+    ["Fluor", normalizeField("fluorescence", s.fluorescence)],
+    ["Depth", s.depthPct ? `${s.depthPct}%` : "—"],
+    ["Table", s.tablePct ? `${s.tablePct}%` : "—"],
+    ["Measurements", s.measurements ?? "—"],
+    ["Location", normalizeField("location", s.location)],
   ];
 
   return (
@@ -46,9 +52,9 @@ export default async function StonePage({ params }: { params: Promise<{ ref: str
                   <span className="dot" style={{ background: STATUS_COLOR[s.status] }} />{label[s.status]}
                 </span>
               </div>
-              <div style={{ fontSize: 26, fontWeight: 700 }}>{s.shape} {s.carat}ct {s.color} {s.clarity}</div>
+              <div style={{ fontSize: 26, fontWeight: 700 }}>{normalizeField("shape", s.shape)} {s.carat}ct {normalizeField("color", s.color)} {normalizeField("clarity", s.clarity)}</div>
               <div style={{ fontSize: 13, color: "var(--i6)", marginTop: 4 }}>
-                Lab-Grown · {s.lab} Certified · {s.growthType ?? "—"} · {s.location ?? "—"}
+                Lab-Grown · {s.lab} Certified · {s.growthType ?? "—"} · {normalizeField("location", s.location)}
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 14 }}>
                 <span className="tnum" style={{ fontSize: 30, fontWeight: 700, color: "var(--b)" }}>{s.totalPrice ? `$${s.totalPrice}` : "—"}</span>
@@ -67,7 +73,7 @@ export default async function StonePage({ params }: { params: Promise<{ ref: str
       </div>
       <div className="foot" style={{ position: "sticky", bottom: 0 }}>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 600 }}>{s.shape} {s.carat}ct {s.color} {s.clarity}</div>
+          <div style={{ fontSize: 13, fontWeight: 600 }}>{normalizeField("shape", s.shape)} {s.carat}ct {normalizeField("color", s.color)} {normalizeField("clarity", s.clarity)}</div>
           <div style={{ fontSize: 12, color: "var(--i6)" }}>{s.totalPrice ? `$${s.totalPrice} total` : ""} · {label[s.status]}</div>
         </div>
         <div style={{ flex: 1 }} />
