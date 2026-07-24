@@ -103,6 +103,13 @@ export function isFancyColor(v: string): boolean {
   return !/^[D-Z]$/.test(v);
 }
 
+// Location abbreviations → full names.
+const LOCATION_MAP: Record<string, string> = { HK: "Hong Kong", NY: "New York", MUMBAI: "Mumbai", SURAT: "Surat" };
+function normalizeLocation(raw: string): string {
+  const up = raw.trim().toUpperCase();
+  return LOCATION_MAP[up] ?? titleCase(raw);
+}
+
 const NORMALIZERS: Record<FacetField, (s: string) => string> = {
   shape: normalizeShape,
   color: normalizeColor,
@@ -112,7 +119,7 @@ const NORMALIZERS: Record<FacetField, (s: string) => string> = {
   symmetry: normalizeGrade,
   fluorescence: normalizeFluor,
   growthType: upper,
-  location: titleCase,
+  location: normalizeLocation,
 };
 
 const ORDERS: Partial<Record<FacetField, string[]>> = {
