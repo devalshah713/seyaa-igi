@@ -9,7 +9,7 @@ type Facets = {
   caratMin: number; caratMax: number; priceMin: number; priceMax: number; total: number;
 };
 
-// Static lists reproduced exactly from the approved prototype.
+// Static lists reproduced from the approved prototype.
 const SHAPES = ["Round", "Oval", "Pear", "Cushion", "Emerald", "Radiant", "Princess", "Asscher", "Marquise", "Heart", "Trilliant", "Baguette", "Square", "Hexagon"];
 const COLORS = ["D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q"];
 const CLARITY = ["FL", "IF", "VVS1", "VVS2", "VS1", "VS2", "SI1", "SI2", "SI3", "I1", "I2", "I3"];
@@ -21,6 +21,36 @@ const CARAT_PRESETS: [string, string, string][] = [
   ["1.50", "1.99", "1.50–1.99"], ["2.00", "2.99", "2.00–2.99"], ["3.00", "3.99", "3.00–3.99"],
   ["4.00", "4.99", "4.00–4.99"], ["5.00", "5.99", "5.00–5.99"], ["10", "", "10+"],
 ];
+
+// ---- Module-level helpers (defined ONCE so inputs keep focus) ----
+function Field({ lb, v, set, ph }: { lb: string; v: string; set: (s: string) => void; ph: string }) {
+  return (
+    <div className="field" style={{ flex: 1 }}>
+      <div className="lb">{lb}</div>
+      <input value={v} onChange={(e) => set(e.target.value)} placeholder={ph} inputMode="decimal"
+        style={{ border: 0, background: "transparent", padding: 0, fontSize: 14, fontWeight: 500, width: "100%" }} />
+    </div>
+  );
+}
+function MinMax({ a, b, sa, sb, pa, pb }: { a: string; b: string; sa: (s: string) => void; sb: (s: string) => void; pa: string; pb: string }) {
+  return (
+    <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+      <Field lb="Min" v={a} set={sa} ph={pa} /><span style={{ color: "var(--i4)" }}>›</span><Field lb="Max" v={b} set={sb} ph={pb} />
+    </div>
+  );
+}
+function StaticRange({ label }: { label: string }) {
+  return (
+    <div>
+      <div style={{ fontSize: 12, fontWeight: 600, color: "var(--i6)", marginBottom: 7 }}>{label}</div>
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <div className="field" style={{ flex: 1 }}><div className="lb">Min</div></div>
+        <span style={{ color: "var(--i4)" }}>›</span>
+        <div className="field" style={{ flex: 1 }}><div className="lb">Max</div></div>
+      </div>
+    </div>
+  );
+}
 
 export default function SearchFilters({ facets }: { facets: Facets }) {
   const router = useRouter();
@@ -43,6 +73,10 @@ export default function SearchFilters({ facets }: { facets: Facets }) {
     });
   }
   const chosen = (param: string) => sel[param] ?? [];
+  const chip = (param: string, label: string, value?: string) => {
+    const v = value ?? label;
+    return <span key={label} className={`chip wide ${chosen(param).includes(v) ? "sel" : ""}`} onClick={() => toggle(param, v)}>{label}</span>;
+  };
 
   function reset() {
     setSel({});
@@ -69,37 +103,6 @@ export default function SearchFilters({ facets }: { facets: Facets }) {
     for (const [k, v] of ranges) if (v.trim()) p.set(k, v.trim());
     router.push("/results?" + p.toString());
   }
-
-  // Reusable pieces --------------------------------------------------------
-  const Chip = ({ param, label, value }: { param: string; label: string; value?: string }) => {
-    const v = value ?? label;
-    return <span className={`chip wide ${chosen(param).includes(v) ? "sel" : ""}`} onClick={() => toggle(param, v)}>{label}</span>;
-  };
-  const Deco = ({ label, sel: s }: { label: string; sel?: boolean }) => <span className={`chip ${s ? "sel" : ""}`}>{label}</span>;
-  const Check = ({ label }: { label: string }) => <span className="check"><span className="bx" />{label}</span>;
-  const Field = ({ lb, v, set, ph }: { lb: string; v: string; set: (s: string) => void; ph: string }) => (
-    <div className="field" style={{ flex: 1 }}>
-      <div className="lb">{lb}</div>
-      <input value={v} onChange={(e) => set(e.target.value)} placeholder={ph} inputMode="decimal"
-        style={{ border: 0, background: "transparent", padding: 0, fontSize: 14, fontWeight: 500, width: "100%" }} />
-    </div>
-  );
-  const MinMax = ({ a, b, sa, sb, pa, pb }: { a: string; b: string; sa: (s: string) => void; sb: (s: string) => void; pa: string; pb: string }) => (
-    <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-      <Field lb="Min" v={a} set={sa} ph={pa} /><span style={{ color: "var(--i4)" }}>›</span><Field lb="Max" v={b} set={sb} ph={pb} />
-    </div>
-  );
-  const MeasCol = ({ label, a, b, sa, sb }: { label: string; a?: string; b?: string; sa?: (s: string) => void; sb?: (s: string) => void }) => (
-    <div>
-      <div style={{ fontSize: 12, fontWeight: 600, color: "var(--i6)", marginBottom: 7 }}>{label}</div>
-      {sa && sb ? <MinMax a={a!} b={b!} sa={sa} sb={sb} pa="Min" pb="Max" />
-        : <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <div className="field" style={{ flex: 1 }}><div className="lb">Min</div></div>
-            <span style={{ color: "var(--i4)" }}>›</span>
-            <div className="field" style={{ flex: 1 }}><div className="lb">Max</div></div>
-          </div>}
-    </div>
-  );
 
   return (
     <>
@@ -142,28 +145,29 @@ export default function SearchFilters({ facets }: { facets: Facets }) {
         <div className="card">
           <div className="chd"><h3>Color</h3><span className="note">{chosen("color").length ? `${chosen("color").length} selected` : "Any"}</span></div>
           <div className="subtab"><b>White</b><span>Fancy</span></div>
-          <Check label="No BGM (Brown / Green / Milky)" />
-          <div className="wrap" style={{ marginTop: 12 }}>{COLORS.map((c) => <Chip key={c} param="color" label={c} />)}</div>
+          <span className="check"><span className="bx" />No BGM (Brown / Green / Milky)</span>
+          <div className="wrap" style={{ marginTop: 12 }}>{COLORS.map((c) => chip("color", c))}</div>
         </div>
 
         {/* Clarity */}
         <div className="card">
           <div className="chd"><h3>Clarity</h3><span className="note">{chosen("clarity").length ? `${chosen("clarity").length} selected` : "Any"}</span></div>
-          <Check label="Eye Clean" />
-          <div className="wrap" style={{ marginTop: 12 }}>{CLARITY.map((c) => <Chip key={c} param="clarity" label={c} />)}</div>
+          <span className="check"><span className="bx" />Eye Clean</span>
+          <div className="wrap" style={{ marginTop: 12 }}>{CLARITY.map((c) => chip("clarity", c))}</div>
         </div>
 
         {/* Cut, Polish & Symmetry */}
         <div className="card">
           <div className="chd"><h3>Cut, Polish &amp; Symmetry</h3></div>
           <div style={{ display: "flex", gap: 20, alignItems: "center", marginBottom: 16, flexWrap: "wrap" }}>
-            <Check label="Hearts & Arrows" /><Deco label="8X" sel /><Deco label="3X+" /><Deco label="3VG+" />
+            <span className="check"><span className="bx" />Hearts &amp; Arrows</span>
+            <span className="chip sel">8X</span><span className="chip">3X+</span><span className="chip">3VG+</span>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {([["Cut", "cut"], ["Polish", "polish"], ["Symmetry", "symmetry"]] as [string, string][]).map(([label, param]) => (
               <div className="cps-row" key={param}>
                 <b className="cps-lb">{label}</b>
-                <div className="wrap"><Deco label="8X" />{GRADES.map((g) => <span key={g} className={`chip ${chosen(param).includes(g) ? "sel" : ""}`} onClick={() => toggle(param, g)}>{g}</span>)}</div>
+                <div className="wrap"><span className="chip">8X</span>{GRADES.map((g) => <span key={g} className={`chip ${chosen(param).includes(g) ? "sel" : ""}`} onClick={() => toggle(param, g)}>{g}</span>)}</div>
               </div>
             ))}
           </div>
@@ -172,7 +176,7 @@ export default function SearchFilters({ facets }: { facets: Facets }) {
         {/* Fluorescence */}
         <div className="card">
           <div className="chd"><h3>Fluorescence</h3><span className="note">{chosen("fluorescence").length ? `${chosen("fluorescence").length} selected` : "Any"}</span></div>
-          <div className="wrap">{FLUOR.map(([label, value]) => <Chip key={value} param="fluorescence" label={label} value={value} />)}</div>
+          <div className="wrap">{FLUOR.map(([label, value]) => chip("fluorescence", label, value))}</div>
         </div>
 
         {/* Total Price / Location */}
@@ -185,8 +189,8 @@ export default function SearchFilters({ facets }: { facets: Facets }) {
           </div>
           <div className="card">
             <div className="chd"><h3>Location</h3><span className="note">{chosen("location").length ? `${chosen("location").length} selected` : "Any"}</span></div>
-            {facets.location.length > 0 && <div className="wrap" style={{ marginBottom: 12 }}>{facets.location.map((l) => <Chip key={l} param="location" label={l} />)}</div>}
-            <Check label="Exclude selected location(s)" />
+            {facets.location.length > 0 && <div className="wrap" style={{ marginBottom: 12 }}>{facets.location.map((l) => chip("location", l))}</div>}
+            <span className="check"><span className="bx" />Exclude selected location(s)</span>
           </div>
         </div>
 
@@ -198,12 +202,14 @@ export default function SearchFilters({ facets }: { facets: Facets }) {
               {["CVD", "HPHT"].map((g) => (
                 <span key={g} className={`check ${chosen("growthType").includes(g) ? "on" : ""}`} onClick={() => toggle("growthType", g)}><span className="bx" />{g}</span>
               ))}
-              <Check label="Others" />
+              <span className="check"><span className="bx" />Others</span>
             </div>
           </div>
           <div className="card">
             <div className="chd"><h3>Treatment</h3></div>
-            <div style={{ display: "flex", gap: 22, flexWrap: "wrap" }}><Check label="As Grown" /><Check label="Treated" /><Check label="Unknown" /></div>
+            <div style={{ display: "flex", gap: 22, flexWrap: "wrap" }}>
+              <span className="check"><span className="bx" />As Grown</span><span className="check"><span className="bx" />Treated</span><span className="check"><span className="bx" />Unknown</span>
+            </div>
           </div>
         </div>
 
@@ -211,12 +217,12 @@ export default function SearchFilters({ facets }: { facets: Facets }) {
         <div className="card">
           <div className="chd"><h3>Measurements</h3></div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 16 }}>
-            <MeasCol label="Depth, %" a={depthMin} b={depthMax} sa={setDepthMin} sb={setDepthMax} />
-            <MeasCol label="Table, %" a={tableMin} b={tableMax} sa={setTableMin} sb={setTableMax} />
-            <MeasCol label="Ratio" a={ratioMin} b={ratioMax} sa={setRatioMin} sb={setRatioMax} />
-            <MeasCol label="Length, mm" />
-            <MeasCol label="Width, mm" />
-            <MeasCol label="Depth, mm" />
+            <div><div style={{ fontSize: 12, fontWeight: 600, color: "var(--i6)", marginBottom: 7 }}>Depth, %</div><MinMax a={depthMin} b={depthMax} sa={setDepthMin} sb={setDepthMax} pa="Min" pb="Max" /></div>
+            <div><div style={{ fontSize: 12, fontWeight: 600, color: "var(--i6)", marginBottom: 7 }}>Table, %</div><MinMax a={tableMin} b={tableMax} sa={setTableMin} sb={setTableMax} pa="Min" pb="Max" /></div>
+            <div><div style={{ fontSize: 12, fontWeight: 600, color: "var(--i6)", marginBottom: 7 }}>Ratio</div><MinMax a={ratioMin} b={ratioMax} sa={setRatioMin} sb={setRatioMax} pa="Min" pb="Max" /></div>
+            <StaticRange label="Length, mm" />
+            <StaticRange label="Width, mm" />
+            <StaticRange label="Depth, mm" />
           </div>
         </div>
       </div>
