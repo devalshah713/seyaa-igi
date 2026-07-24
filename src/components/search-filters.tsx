@@ -9,6 +9,12 @@ type Facets = {
   caratMin: number; caratMax: number; priceMin: number; priceMax: number; total: number;
 };
 
+// Static lists reproduced exactly from the approved prototype.
+const SHAPES = ["Round", "Oval", "Pear", "Cushion", "Emerald", "Radiant", "Princess", "Asscher", "Marquise", "Heart", "Trilliant", "Baguette", "Square", "Hexagon"];
+const COLORS = ["D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q"];
+const CLARITY = ["FL", "IF", "VVS1", "VVS2", "VS1", "VS2", "SI1", "SI2", "SI3", "I1", "I2", "I3"];
+const GRADES = ["Ideal", "Excellent", "Very Good", "Good", "Fair", "Poor"];
+const FLUOR: [string, string][] = [["None", "None"], ["Faint", "Faint"], ["Medium", "Medium"], ["Strong", "Strong"], ["V Strong", "Very Strong"]];
 const CARAT_PRESETS: [string, string, string][] = [
   ["0.30", "0.39", "0.30–0.39"], ["0.40", "0.49", "0.40–0.49"], ["0.50", "0.69", "0.50–0.69"],
   ["0.70", "0.89", "0.70–0.89"], ["0.90", "0.99", "0.90–0.99"], ["1.00", "1.49", "1.00–1.49"],
@@ -64,19 +70,13 @@ export default function SearchFilters({ facets }: { facets: Facets }) {
     router.push("/results?" + p.toString());
   }
 
-  const activeCount =
-    Object.values(sel).reduce((n, a) => n + a.length, 0) +
-    [caratMin, caratMax, priceMin, priceMax, depthMin, depthMax, tableMin, tableMax, ratioMin, ratioMax].filter((v) => v.trim()).length;
-
-  // Small reusable pieces --------------------------------------------------
-  const Chips = ({ param, options }: { param: string; options: string[] }) => (
-    <div className="wrap">
-      {options.map((o) => (
-        <span key={o} className={`chip wide ${chosen(param).includes(o) ? "sel" : ""}`} onClick={() => toggle(param, o)}>{o}</span>
-      ))}
-    </div>
-  );
-
+  // Reusable pieces --------------------------------------------------------
+  const Chip = ({ param, label, value }: { param: string; label: string; value?: string }) => {
+    const v = value ?? label;
+    return <span className={`chip wide ${chosen(param).includes(v) ? "sel" : ""}`} onClick={() => toggle(param, v)}>{label}</span>;
+  };
+  const Deco = ({ label, sel: s }: { label: string; sel?: boolean }) => <span className={`chip ${s ? "sel" : ""}`}>{label}</span>;
+  const Check = ({ label }: { label: string }) => <span className="check"><span className="bx" />{label}</span>;
   const Field = ({ lb, v, set, ph }: { lb: string; v: string; set: (s: string) => void; ph: string }) => (
     <div className="field" style={{ flex: 1 }}>
       <div className="lb">{lb}</div>
@@ -84,12 +84,20 @@ export default function SearchFilters({ facets }: { facets: Facets }) {
         style={{ border: 0, background: "transparent", padding: 0, fontSize: 14, fontWeight: 500, width: "100%" }} />
     </div>
   );
-
   const MinMax = ({ a, b, sa, sb, pa, pb }: { a: string; b: string; sa: (s: string) => void; sb: (s: string) => void; pa: string; pb: string }) => (
     <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-      <Field lb="Min" v={a} set={sa} ph={pa} />
-      <span style={{ color: "var(--i4)" }}>›</span>
-      <Field lb="Max" v={b} set={sb} ph={pb} />
+      <Field lb="Min" v={a} set={sa} ph={pa} /><span style={{ color: "var(--i4)" }}>›</span><Field lb="Max" v={b} set={sb} ph={pb} />
+    </div>
+  );
+  const MeasCol = ({ label, a, b, sa, sb }: { label: string; a?: string; b?: string; sa?: (s: string) => void; sb?: (s: string) => void }) => (
+    <div>
+      <div style={{ fontSize: 12, fontWeight: 600, color: "var(--i6)", marginBottom: 7 }}>{label}</div>
+      {sa && sb ? <MinMax a={a!} b={b!} sa={sa} sb={sb} pa="Min" pb="Max" />
+        : <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <div className="field" style={{ flex: 1 }}><div className="lb">Min</div></div>
+            <span style={{ color: "var(--i4)" }}>›</span>
+            <div className="field" style={{ flex: 1 }}><div className="lb">Max</div></div>
+          </div>}
     </div>
   );
 
@@ -97,37 +105,32 @@ export default function SearchFilters({ facets }: { facets: Facets }) {
     <>
       <div className="content">
         <div style={{ display: "flex", alignItems: "flex-end", gap: 14, flexWrap: "wrap" }}>
-          <div className="page-title">
-            <h2>Search Inventory</h2>
-            <p>Lab-Grown Diamonds · IGI Certified · Seyaa Solitaire stock</p>
-          </div>
+          <div className="page-title"><h2>Search Inventory</h2><p>Lab-Grown Diamonds · IGI Certified · Seyaa Solitaire stock</p></div>
           <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
             <span className="chip sel">Classic Search</span>
+            <span className="chip">AI Search <b style={{ color: "var(--b)", fontSize: 9 }}>βeta</b></span>
           </div>
         </div>
 
-        {/* Shape — faceted diamond icon cards */}
-        {facets.shape.length > 0 && (
-          <div className="card">
-            <div className="chd"><h3>Shape</h3><span className="note">{chosen("shape").length ? `${chosen("shape").length} selected` : "Any"}</span></div>
-            <div className="wrap">
-              {facets.shape.map((s) => {
-                const on = chosen("shape").includes(s);
-                return (
-                  <span key={s} className={`chip shape ${on ? "sel" : ""}`} onClick={() => toggle("shape", s)}>
-                    <ShapeIcon name={s} selected={on} />
-                    <span>{s}</span>
-                  </span>
-                );
-              })}
-            </div>
+        {/* Shape */}
+        <div className="card">
+          <div className="chd"><h3>Shape</h3><span className="note">{chosen("shape").length ? `${chosen("shape").length} selected` : "Any"}</span></div>
+          <div className="wrap">
+            {SHAPES.map((s) => {
+              const on = chosen("shape").includes(s);
+              return (
+                <span key={s} className={`chip shape ${on ? "sel" : ""}`} onClick={() => toggle("shape", s)}>
+                  <ShapeIcon name={s} selected={on} /><span>{s}</span>
+                </span>
+              );
+            })}
           </div>
-        )}
+        </div>
 
         {/* Carat */}
         <div className="card">
           <div className="chd"><h3>Carat</h3><span className="note">{facets.caratMax ? `${facets.caratMin}–${facets.caratMax} ct in stock` : ""}</span></div>
-          <div style={{ marginBottom: 14 }}><MinMax a={caratMin} b={caratMax} sa={setCaratMin} sb={setCaratMax} pa={String(facets.caratMin || "0.30")} pb={String(facets.caratMax || "10")} /></div>
+          <div style={{ marginBottom: 14 }}><MinMax a={caratMin} b={caratMax} sa={setCaratMin} sb={setCaratMax} pa="Min, ct" pb="Max, ct" /></div>
           <div className="wrap">
             {CARAT_PRESETS.map(([lo, hi, label]) => {
               const on = caratMin === lo && caratMax === hi;
@@ -136,87 +139,85 @@ export default function SearchFilters({ facets }: { facets: Facets }) {
           </div>
         </div>
 
-        {/* Color / Clarity */}
-        <div className="row2">
-          {facets.color.length > 0 && (
-            <div className="card">
-              <div className="chd"><h3>Colour</h3><span className="note">{chosen("color").length ? `${chosen("color").length} selected` : "Any"}</span></div>
-              <div className="subtab"><b>White</b><span>Fancy</span></div>
-              <Chips param="color" options={facets.color} />
-            </div>
-          )}
-          {facets.clarity.length > 0 && (
-            <div className="card">
-              <div className="chd"><h3>Clarity</h3><span className="note">{chosen("clarity").length ? `${chosen("clarity").length} selected` : "Any"}</span></div>
-              <Chips param="clarity" options={facets.clarity} />
-            </div>
-          )}
+        {/* Color */}
+        <div className="card">
+          <div className="chd"><h3>Color</h3><span className="note">{chosen("color").length ? `${chosen("color").length} selected` : "Any"}</span></div>
+          <div className="subtab"><b>White</b><span>Fancy</span></div>
+          <Check label="No BGM (Brown / Green / Milky)" />
+          <div className="wrap" style={{ marginTop: 12 }}>{COLORS.map((c) => <Chip key={c} param="color" label={c} />)}</div>
+        </div>
+
+        {/* Clarity */}
+        <div className="card">
+          <div className="chd"><h3>Clarity</h3><span className="note">{chosen("clarity").length ? `${chosen("clarity").length} selected` : "Any"}</span></div>
+          <Check label="Eye Clean" />
+          <div className="wrap" style={{ marginTop: 12 }}>{CLARITY.map((c) => <Chip key={c} param="clarity" label={c} />)}</div>
         </div>
 
         {/* Cut, Polish & Symmetry */}
-        {(facets.cut.length || facets.polish.length || facets.symmetry.length) > 0 && (
-          <div className="card">
-            <div className="chd"><h3>Cut, Polish &amp; Symmetry</h3></div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {([["Cut", "cut", facets.cut], ["Polish", "polish", facets.polish], ["Symmetry", "symmetry", facets.symmetry]] as [string, string, string[]][]).map(([label, param, opts]) =>
-                opts.length ? (
-                  <div className="cps-row" key={param}>
-                    <b className="cps-lb">{label}</b>
-                    <div className="wrap">
-                      {opts.map((o) => <span key={o} className={`chip ${chosen(param).includes(o) ? "sel" : ""}`} onClick={() => toggle(param, o)}>{o}</span>)}
-                    </div>
-                  </div>
-                ) : null
-              )}
-            </div>
+        <div className="card">
+          <div className="chd"><h3>Cut, Polish &amp; Symmetry</h3></div>
+          <div style={{ display: "flex", gap: 20, alignItems: "center", marginBottom: 16, flexWrap: "wrap" }}>
+            <Check label="Hearts & Arrows" /><Deco label="8X" sel /><Deco label="3X+" /><Deco label="3VG+" />
           </div>
-        )}
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {([["Cut", "cut"], ["Polish", "polish"], ["Symmetry", "symmetry"]] as [string, string][]).map(([label, param]) => (
+              <div className="cps-row" key={param}>
+                <b className="cps-lb">{label}</b>
+                <div className="wrap"><Deco label="8X" />{GRADES.map((g) => <span key={g} className={`chip ${chosen(param).includes(g) ? "sel" : ""}`} onClick={() => toggle(param, g)}>{g}</span>)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Fluorescence */}
-        {facets.fluorescence.length > 0 && (
-          <div className="card">
-            <div className="chd"><h3>Fluorescence</h3><span className="note">{chosen("fluorescence").length ? `${chosen("fluorescence").length} selected` : "Any"}</span></div>
-            <Chips param="fluorescence" options={facets.fluorescence} />
-          </div>
-        )}
+        <div className="card">
+          <div className="chd"><h3>Fluorescence</h3><span className="note">{chosen("fluorescence").length ? `${chosen("fluorescence").length} selected` : "Any"}</span></div>
+          <div className="wrap">{FLUOR.map(([label, value]) => <Chip key={value} param="fluorescence" label={label} value={value} />)}</div>
+        </div>
 
         {/* Total Price / Location */}
         <div className="row2">
           <div className="card">
             <div className="chd"><h3>Total Price</h3></div>
-            <div className="subtab"><b>Total Price</b><span>USD</span></div>
+            <div className="subtab"><b>Total Price</b><span>Price / ct</span></div>
             <MinMax a={priceMin} b={priceMax} sa={setPriceMin} sb={setPriceMax}
-              pa={facets.priceMin ? `$${Math.floor(facets.priceMin)}` : "$0"} pb={facets.priceMax ? `$${Math.ceil(facets.priceMax)}` : "$50000"} />
+              pa={facets.priceMin ? `$${Math.floor(facets.priceMin)}` : "Min, $"} pb={facets.priceMax ? `$${Math.ceil(facets.priceMax)}` : "Max, $"} />
           </div>
-          {facets.location.length > 0 && (
-            <div className="card">
-              <div className="chd"><h3>Location</h3><span className="note">{chosen("location").length ? `${chosen("location").length} selected` : "Any"}</span></div>
-              <Chips param="location" options={facets.location} />
-            </div>
-          )}
+          <div className="card">
+            <div className="chd"><h3>Location</h3><span className="note">{chosen("location").length ? `${chosen("location").length} selected` : "Any"}</span></div>
+            {facets.location.length > 0 && <div className="wrap" style={{ marginBottom: 12 }}>{facets.location.map((l) => <Chip key={l} param="location" label={l} />)}</div>}
+            <Check label="Exclude selected location(s)" />
+          </div>
         </div>
 
-        {/* Growth Type */}
-        {facets.growthType.length > 0 && (
+        {/* Growth Type / Treatment */}
+        <div className="row2">
           <div className="card">
             <div className="chd"><h3>Growth Type</h3></div>
             <div style={{ display: "flex", gap: 22, flexWrap: "wrap" }}>
-              {facets.growthType.map((g) => (
-                <span key={g} className={`check ${chosen("growthType").includes(g) ? "on" : ""}`} onClick={() => toggle("growthType", g)}>
-                  <span className="bx" />{g}
-                </span>
+              {["CVD", "HPHT"].map((g) => (
+                <span key={g} className={`check ${chosen("growthType").includes(g) ? "on" : ""}`} onClick={() => toggle("growthType", g)}><span className="bx" />{g}</span>
               ))}
+              <Check label="Others" />
             </div>
           </div>
-        )}
+          <div className="card">
+            <div className="chd"><h3>Treatment</h3></div>
+            <div style={{ display: "flex", gap: 22, flexWrap: "wrap" }}><Check label="As Grown" /><Check label="Treated" /><Check label="Unknown" /></div>
+          </div>
+        </div>
 
         {/* Measurements */}
         <div className="card">
           <div className="chd"><h3>Measurements</h3></div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 16 }}>
-            <div><div style={{ fontSize: 12, fontWeight: 600, color: "var(--i6)", marginBottom: 7 }}>Depth, %</div><MinMax a={depthMin} b={depthMax} sa={setDepthMin} sb={setDepthMax} pa="55" pb="75" /></div>
-            <div><div style={{ fontSize: 12, fontWeight: 600, color: "var(--i6)", marginBottom: 7 }}>Table, %</div><MinMax a={tableMin} b={tableMax} sa={setTableMin} sb={setTableMax} pa="50" pb="70" /></div>
-            <div><div style={{ fontSize: 12, fontWeight: 600, color: "var(--i6)", marginBottom: 7 }}>Ratio (L/W)</div><MinMax a={ratioMin} b={ratioMax} sa={setRatioMin} sb={setRatioMax} pa="1.00" pb="2.00" /></div>
+            <MeasCol label="Depth, %" a={depthMin} b={depthMax} sa={setDepthMin} sb={setDepthMax} />
+            <MeasCol label="Table, %" a={tableMin} b={tableMax} sa={setTableMin} sb={setTableMax} />
+            <MeasCol label="Ratio" a={ratioMin} b={ratioMax} sa={setRatioMin} sb={setRatioMax} />
+            <MeasCol label="Length, mm" />
+            <MeasCol label="Width, mm" />
+            <MeasCol label="Depth, mm" />
           </div>
         </div>
       </div>
@@ -224,8 +225,8 @@ export default function SearchFilters({ facets }: { facets: Facets }) {
       <div className="foot" style={{ position: "sticky", bottom: 0 }}>
         <button className="btn out" onClick={reset}>Reset All</button>
         <div style={{ flex: 1 }} />
-        <span style={{ fontSize: 12.5, color: "var(--i6)" }}>≈ <b>{facets.total.toLocaleString()}</b> stones in stock</span>
-        <button className="btn pri" onClick={apply}>Apply Filters{activeCount ? ` · ${activeCount}` : ""}</button>
+        <span style={{ fontSize: 12.5, color: "var(--i6)" }}>≈ <b>{facets.total.toLocaleString()}</b> stones match your criteria</span>
+        <button className="btn pri" onClick={apply}>Apply Filters</button>
       </div>
     </>
   );
