@@ -1,86 +1,53 @@
-"use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { db } from "@/lib/db";
+import SearchFilters from "@/components/search-filters";
 
-const SHAPES = ["Round", "Oval", "Pear", "Cushion", "Emerald", "Radiant", "Princess", "Asscher", "Marquise", "Heart"];
-const COLORS = ["D", "E", "F", "G", "H", "I", "J", "K"];
-const CLARITY = ["FL", "IF", "VVS1", "VVS2", "VS1", "VS2", "SI1", "SI2"];
+// Canonical ordering for graded scales; unknown values are appended alphabetically.
+const COLOR_ORDER = ["D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
+const CLARITY_ORDER = ["FL", "IF", "VVS1", "VVS2", "VS1", "VS2", "SI1", "SI2", "SI3", "I1", "I2", "I3"];
+const GRADE_ORDER = ["ID", "EX", "EXCELLENT", "VG", "VERY GOOD", "GD", "G", "GOOD", "FR", "FAIR", "PR", "POOR"];
+const FLUOR_ORDER = ["NON", "NONE", "FNT", "FAINT", "MED", "MEDIUM", "STG", "ST", "STRONG", "VST", "VERY STRONG"];
 
-export default function SearchPage() {
-  const router = useRouter();
-  const [shape, setShape] = useState<string | null>("Round");
-  const [color, setColor] = useState<string | null>(null);
-  const [clarity, setClarity] = useState<string | null>(null);
-  const [caratMin, setCaratMin] = useState("");
-  const [caratMax, setCaratMax] = useState("");
+function sortBy(values: string[], order: string[]) {
+  const idx = (v: string) => {
+    const i = order.indexOf(v.toUpperCase());
+    return i === -1 ? order.length + 1 : i;
+  };
+  return [...values].sort((a, b) => idx(a) - idx(b) || a.localeCompare(b));
+}
 
-  function apply() {
-    const p = new URLSearchParams();
-    if (shape) p.set("shape", shape);
-    if (color) p.set("color", color);
-    if (clarity) p.set("clarity", clarity);
-    if (caratMin) p.set("caratMin", caratMin);
-    if (caratMax) p.set("caratMax", caratMax);
-    router.push("/results?" + p.toString());
-  }
+async function facet(field: "shape" | "color" | "clarity" | "cut" | "polish" | "symmetry" | "fluorescence" | "growthType" | "location") {
+  const rows = await db.stone.findMany({
+    where: { [field]: { not: null } },
+    select: { [field]: true },
+    distinct: [field],
+  });
+  return rows
+    .map((r) => (r as unknown as Record<string, string | null>)[field])
+    .filter((v): v is string => !!v && v.trim() !== "");
+}
 
-  const Chip = ({ label, on, onClick }: { label: string; on: boolean; onClick: () => void }) => (
-    <span className={`chip ${on ? "sel" : ""}`} onClick={onClick}>{label}</span>
-  );
+export default async function SearchPage() {
+  const [shapes, colors, clarities, cuts, polishes, symmetries, fluors, growth, locations, agg] = await Promise.all([
+    facet("shape"), facet("color"), facet("clarity"), facet("cut"), facet("polish"),
+    facet("symmetry"), facet("fluorescence"), facet("growthType"), facet("location"),
+    db.stone.aggregate({ _min: { carat: true, totalPrice: true }, _max: { carat: true, totalPrice: true } }),
+  ]);
 
-  return (
-    <>
-      <div className="content">
-        <div className="page-title">
-          <h2>Search Inventory</h2>
-          <p>Lab-Grown Diamonds · IGI Certified · Seyaa Solitaire stock</p>
-        </div>
+  const facets = {
+    shape: shapes.sort(),
+    color: sortBy(colors, COLOR_ORDER),
+    clarity: sortBy(clarities, CLARITY_ORDER),
+    cut: sortBy(cuts, GRADE_ORDER),
+    polish: sortBy(polishes, GRADE_ORDER),
+    symmetry: sortBy(symmetries, GRADE_ORDER),
+    fluorescence: sortBy(fluors, FLUOR_ORDER),
+    growthType: growth.sort(),
+    location: locations.sort(),
+    caratMin: agg._min.carat ?? 0,
+    caratMax: agg._max.carat ?? 0,
+    priceMin: agg._min.totalPrice ?? 0,
+    priceMax: agg._max.totalPrice ?? 0,
+  };
 
-        <div className="card">
-          <div className="chd"><h3>Shape</h3><span className="note">{shape ? `Selected: ${shape}` : "Any"}</span></div>
-          <div className="wrap">
-            {SHAPES.map((s) => <Chip key={s} label={s} on={shape === s} onClick={() => setShape(shape === s ? null : s)} />)}
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="chd"><h3>Carat</h3></div>
-          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <div className="field" style={{ flex: 1, maxWidth: 200 }}>
-              <div className="lb">Min, ct</div>
-              <input value={caratMin} onChange={(e) => setCaratMin(e.target.value)} placeholder="0.30"
-                style={{ border: 0, background: "transparent", padding: 0, fontSize: 13, fontWeight: 500, width: "100%" }} />
-            </div>
-            <span style={{ color: "var(--i4)" }}>›</span>
-            <div className="field" style={{ flex: 1, maxWidth: 200 }}>
-              <div className="lb">Max, ct</div>
-              <input value={caratMax} onChange={(e) => setCaratMax(e.target.value)} placeholder="10"
-                style={{ border: 0, background: "transparent", padding: 0, fontSize: 13, fontWeight: 500, width: "100%" }} />
-            </div>
-          </div>
-        </div>
-
-        <div className="row2">
-          <div className="card">
-            <div className="chd"><h3>Color</h3></div>
-            <div className="wrap">
-              {COLORS.map((c) => <Chip key={c} label={c} on={color === c} onClick={() => setColor(color === c ? null : c)} />)}
-            </div>
-          </div>
-          <div className="card">
-            <div className="chd"><h3>Clarity</h3></div>
-            <div className="wrap">
-              {CLARITY.map((c) => <Chip key={c} label={c} on={clarity === c} onClick={() => setClarity(clarity === c ? null : c)} />)}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="foot" style={{ position: "sticky", bottom: 0 }}>
-        <button className="btn" onClick={() => { setShape(null); setColor(null); setClarity(null); setCaratMin(""); setCaratMax(""); }}>Reset All</button>
-        <div style={{ flex: 1 }} />
-        <button className="btn pri" onClick={apply}>Apply Filters</button>
-      </div>
-    </>
-  );
+  return <SearchFilters facets={facets} />;
 }

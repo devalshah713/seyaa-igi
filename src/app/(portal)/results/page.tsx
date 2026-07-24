@@ -16,13 +16,27 @@ export default async function ResultsPage({
   const sp = await searchParams;
   const view = sp.view === "grid" ? "grid" : "list";
 
+  // Multi-select filters arrive comma-separated → Prisma `in`.
+  const inList = (v?: string) => (v ? { in: v.split(",").filter(Boolean) } : undefined);
+  // Numeric range → Prisma gte/lte (only set when a bound is present).
+  const range = (min?: string, max?: string) =>
+    min || max ? { gte: min ? Number(min) : undefined, lte: max ? Number(max) : undefined } : undefined;
+
   const where: Prisma.StoneWhereInput = {
-    ...(sp.shape ? { shape: sp.shape } : {}),
-    ...(sp.color ? { color: sp.color } : {}),
-    ...(sp.clarity ? { clarity: sp.clarity } : {}),
-    ...(sp.caratMin || sp.caratMax
-      ? { carat: { gte: sp.caratMin ? Number(sp.caratMin) : undefined, lte: sp.caratMax ? Number(sp.caratMax) : undefined } }
-      : {}),
+    ...(inList(sp.shape) ? { shape: inList(sp.shape) } : {}),
+    ...(inList(sp.color) ? { color: inList(sp.color) } : {}),
+    ...(inList(sp.clarity) ? { clarity: inList(sp.clarity) } : {}),
+    ...(inList(sp.cut) ? { cut: inList(sp.cut) } : {}),
+    ...(inList(sp.polish) ? { polish: inList(sp.polish) } : {}),
+    ...(inList(sp.symmetry) ? { symmetry: inList(sp.symmetry) } : {}),
+    ...(inList(sp.fluorescence) ? { fluorescence: inList(sp.fluorescence) } : {}),
+    ...(inList(sp.growth) ? { growthType: inList(sp.growth) } : {}),
+    ...(inList(sp.location) ? { location: inList(sp.location) } : {}),
+    ...(range(sp.caratMin, sp.caratMax) ? { carat: range(sp.caratMin, sp.caratMax) } : {}),
+    ...(range(sp.priceMin, sp.priceMax) ? { totalPrice: range(sp.priceMin, sp.priceMax) } : {}),
+    ...(range(sp.depthMin, sp.depthMax) ? { depthPct: range(sp.depthMin, sp.depthMax) } : {}),
+    ...(range(sp.tableMin, sp.tableMax) ? { tablePct: range(sp.tableMin, sp.tableMax) } : {}),
+    ...(range(sp.ratioMin, sp.ratioMax) ? { ratio: range(sp.ratioMin, sp.ratioMax) } : {}),
   };
 
   const [total, stones] = await Promise.all([
