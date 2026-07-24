@@ -46,13 +46,13 @@ export default function SearchPage() {
         <div className="card">
           <div className="chd"><h3>Carat</h3></div>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <div className="field" style={{ width: 160 }}>
+            <div className="field" style={{ flex: 1, maxWidth: 200 }}>
               <div className="lb">Min, ct</div>
               <input value={caratMin} onChange={(e) => setCaratMin(e.target.value)} placeholder="0.30"
                 style={{ border: 0, background: "transparent", padding: 0, fontSize: 13, fontWeight: 500, width: "100%" }} />
             </div>
             <span style={{ color: "var(--i4)" }}>›</span>
-            <div className="field" style={{ width: 160 }}>
+            <div className="field" style={{ flex: 1, maxWidth: 200 }}>
               <div className="lb">Max, ct</div>
               <input value={caratMax} onChange={(e) => setCaratMax(e.target.value)} placeholder="10"
                 style={{ border: 0, background: "transparent", padding: 0, fontSize: 13, fontWeight: 500, width: "100%" }} />

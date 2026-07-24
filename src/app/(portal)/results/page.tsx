@@ -43,7 +43,7 @@ export default async function ResultsPage({
         {stones.length === 0 && <div className="card">No stones match these filters. <Link className="linka" href="/search">Adjust your search →</Link></div>}
 
         {view === "list" && stones.length > 0 && (
-          <div className="tbl-wrap">
+          <div className="tbl-wrap res-table">
             <table className="tbl" style={{ minWidth: 1080 }}>
               <thead>
                 <tr>
@@ -65,6 +65,38 @@ export default async function ResultsPage({
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {view === "list" && stones.length > 0 && (
+          <div className="res-cards">
+            {stones.map((s) => (
+              <div key={s.id} className="res-card">
+                <div className="top">
+                  <div>
+                    <Link className="rref" href={`/stone/${s.ref}`}>{s.ref}</Link>
+                    <div className="rsub">{s.shape} · {s.carat}ct · {s.color ?? "—"} · {s.clarity ?? "—"}</div>
+                  </div>
+                  <div className="rprice">
+                    <b className="tnum">{s.totalPrice ? `$${s.totalPrice}` : "—"}</b>
+                    <div style={{ fontSize: 11, color: "var(--i4)" }}>{s.pricePerCt ? `$${s.pricePerCt}/ct` : ""}</div>
+                  </div>
+                </div>
+                <div className="rmeta">
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                    <span className="dot" style={{ background: STATUS_COLOR[s.status] }} />{label[s.status]}
+                  </span>
+                  {s.cut && <span>Cut {s.cut}</span>}
+                  {s.polish && <span>Pol {s.polish}</span>}
+                  {s.symmetry && <span>Sym {s.symmetry}</span>}
+                  {s.location && <span>{s.location}</span>}
+                </div>
+                <div className="ract">
+                  <Link className="btn sm out" href={`/stone/${s.ref}`}>Details</Link>
+                  {s.status === "AVAILABLE" && <AddToCart stoneId={s.id} small />}
+                </div>
+              </div>
+            ))}
           </div>
         )}
 

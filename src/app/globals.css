@@ -26,7 +26,11 @@ a { color: inherit; text-decoration: none; }
 .pnav .grow { flex: 1; }
 .pnav .navcart { display: flex; align-items: center; gap: 6px; background: #33291f; color: #f0e3d8; padding: 7px 11px; border-radius: 8px; font-size: 12px; font-weight: 600; }
 .pnav .acct { display: flex; align-items: center; gap: 8px; background: #2e2621; padding: 7px 12px; border-radius: 8px; font-size: 12px; cursor: pointer; }
-.pnav .acct .av { width: 20px; height: 20px; border-radius: 50%; background: var(--b); }
+.pnav .acct .av { width: 20px; height: 20px; border-radius: 50%; background: var(--b); flex: 0 0 auto; }
+.pnav .adminpill { font-size: 10px; font-weight: 700; letter-spacing: 1px; background: #3a2e24; color: #e4b98a; padding: 3px 8px; border-radius: 6px; }
+.pnav .hamb { display: none; flex-direction: column; gap: 4px; background: transparent; border: 0; padding: 6px; cursor: pointer; }
+.pnav .hamb span { width: 20px; height: 2px; background: #e4dcd4; border-radius: 2px; }
+.pnav .mobmenu { display: none; }
 
 /* layout helpers */
 .content { padding: 22px 26px; display: flex; flex-direction: column; gap: 16px; max-width: 1320px; margin: 0 auto; width: 100%; }
@@ -105,7 +109,74 @@ table.tbl tr:hover td { background: #faf7f4; }
 .msg.err { background: #fdecea; color: #b23b2c; }
 .msg.ok { background: var(--okbg); color: #227a54; }
 
+/* mobile results cards (hidden on desktop; shown on phones) */
+.res-cards { display: none; }
+.res-card { background: #fff; border: 1px solid var(--bd); border-radius: 12px; padding: 14px 15px; display: flex; flex-direction: column; gap: 10px; }
+.res-card .top { display: flex; align-items: flex-start; gap: 10px; }
+.res-card .rref { font-weight: 700; font-size: 14px; color: var(--ink); }
+.res-card .rsub { font-size: 12.5px; color: var(--i6); margin-top: 2px; }
+.res-card .rprice { margin-left: auto; text-align: right; }
+.res-card .rprice b { font-size: 16px; }
+.res-card .rmeta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--i6); }
+.res-card .ract { display: flex; gap: 8px; }
+.res-card .ract .btn { flex: 1; }
+
 @media (max-width: 860px) {
   .login { grid-template-columns: 1fr; } .brandside { display: none; }
-  .row2, .detail, .stats { grid-template-columns: 1fr; }
+  .row2, .detail, .stats { grid-template-columns: 1fr !important; }
+}
+
+/* phones */
+@media (max-width: 760px) {
+  body { font-size: 13.5px; }
+
+  /* nav → hamburger */
+  .pnav { gap: 12px; padding: 0 14px; height: 56px; }
+  .pnav .hamb { display: flex; }
+  .pnav .navi { display: none; }
+  .pnav .lg .nm { font-size: 12px; letter-spacing: .8px; }
+  .pnav .navcart { padding: 8px 10px; }
+  .pnav .navcart .cart-label { display: none; }
+  .pnav .acct .acct-name { display: none; }
+  .pnav .acct { padding: 8px 11px; }
+  .pnav .mobmenu {
+    display: flex; flex-direction: column; position: absolute; top: 56px; left: 0; right: 0; z-index: 50;
+    background: var(--head); border-top: 1px solid #3a332c; box-shadow: 0 12px 24px rgba(0,0,0,.28);
+  }
+  .pnav .mobmenu a { color: #e4dcd4; font-size: 15px; font-weight: 500; padding: 15px 18px; border-bottom: 1px solid #3a332c; }
+  .pnav .mobmenu a:active, .pnav .mobmenu a.on { background: #37302a; color: #fff; }
+  .pnav { position: relative; }
+
+  /* spacing */
+  .content { padding: 16px 14px; gap: 13px; }
+  .toolbar, .foot { padding: 12px 14px; gap: 10px; }
+  .card { padding: 15px 16px; }
+  .page-title h2 { font-size: 19px; }
+
+  /* stacking */
+  .spec-grid { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .stat { padding: 15px 16px; }
+  .stat .big { font-size: 24px; }
+
+  /* comfy tap targets */
+  .btn { padding: 12px 18px; }
+  .btn.sm { padding: 10px 14px; }
+  .chip { padding: 10px 14px; font-size: 12.5px; }
+
+  /* list view: swap wide table for stacked cards */
+  .res-table { display: none; }
+  .res-cards { display: grid; gap: 12px; }
+
+  /* sticky action footer wraps + full-width buttons */
+  .foot { flex-wrap: wrap; }
+  .foot .btn { flex: 1 1 auto; }
+
+  /* stone detail media not too tall */
+  .media-main { aspect-ratio: 1 / 1; }
+}
+
+@media (max-width: 400px) {
+  .stats { grid-template-columns: 1fr; }
+  .pnav .lg .nm { display: none; }
 }
