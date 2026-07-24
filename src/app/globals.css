@@ -16,9 +16,9 @@ a { color: inherit; text-decoration: none; }
 .tnum { font-variant-numeric: tabular-nums; }
 
 /* nav */
-.pnav { display: flex; align-items: center; gap: 26px; background: var(--dark); padding: 0 24px; height: 60px; color: #fff; }
+.pnav { display: flex; align-items: center; gap: 26px; background: var(--dark); padding: 0 24px; height: 70px; color: #fff; }
 .pnav .lg { display: flex; align-items: center; gap: 9px; }
-.pnav .lg img { width: 40px; height: 40px; object-fit: contain; }
+.pnav .lg img { width: 54px; height: 54px; object-fit: contain; }
 .pnav .lg .nm { font-weight: 700; letter-spacing: 1.4px; font-size: 13.5px; }
 .pnav .navi { display: flex; gap: 22px; align-items: center; }
 .pnav .navi a { color: #b9afa6; font-size: 12.5px; font-weight: 500; }
@@ -146,7 +146,7 @@ table.tbl tr:hover td { background: #faf7f4; }
   body { font-size: 13.5px; }
 
   /* nav → hamburger */
-  .pnav { gap: 12px; padding: 0 14px; height: 56px; }
+  .pnav { gap: 12px; padding: 0 14px; height: 64px; }
   .pnav .hamb { display: flex; }
   .pnav .navi { display: none; }
   .pnav .lg .nm { font-size: 12px; letter-spacing: .8px; }
@@ -155,7 +155,7 @@ table.tbl tr:hover td { background: #faf7f4; }
   .pnav .acct .acct-name { display: none; }
   .pnav .acct { padding: 8px 11px; }
   .pnav .mobmenu {
-    display: flex; flex-direction: column; position: absolute; top: 56px; left: 0; right: 0; z-index: 50;
+    display: flex; flex-direction: column; position: absolute; top: 64px; left: 0; right: 0; z-index: 50;
     background: var(--head); border-top: 1px solid #3a332c; box-shadow: 0 12px 24px rgba(0,0,0,.28);
   }
   .pnav .mobmenu a { color: #e4dcd4; font-size: 15px; font-weight: 500; padding: 15px 18px; border-bottom: 1px solid #3a332c; }
