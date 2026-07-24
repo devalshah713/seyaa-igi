@@ -31,11 +31,17 @@ export async function POST(req: Request) {
 
   let created = 0;
   let updated = 0;
-  for (const rec of records) {
+  for (let i = 0; i < records.length; i++) {
+    const rec = records[i];
     const ref = rec.ref as string;
-    const existing = await db.stone.findUnique({ where: { ref }, select: { id: true } });
-    await db.stone.upsert({ where: { ref }, create: rec as never, update: rec as never });
-    existing ? updated++ : created++;
+    try {
+      const existing = await db.stone.findUnique({ where: { ref }, select: { id: true } });
+      await db.stone.upsert({ where: { ref }, create: rec as never, update: rec as never });
+      existing ? updated++ : created++;
+    } catch (e) {
+      // Skip a bad row instead of failing the whole import.
+      errors.push({ row: i + 2, message: e instanceof Error ? e.message.split("\n")[0].slice(0, 200) : "Row failed" });
+    }
   }
 
   return NextResponse.json({

@@ -120,8 +120,8 @@ model Stone {
   ref           String      @unique // Seyaa reference / stock number
   shape         String
   carat         Float
-  color         String
-  clarity       String
+  color         String?
+  clarity       String?
   cut           String?
   polish        String?
   symmetry      String?

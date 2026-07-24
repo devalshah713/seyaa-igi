@@ -18,19 +18,33 @@ export async function POST(req: Request) {
   // Suggest a mapping by loose name matching (e.g. "CTS" -> carat, "SHAPE" -> shape).
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z]/g, "");
   const hints: Record<string, string[]> = {
-    ref: ["ref", "stock", "srno", "sr", "certno", "id"],
-    carat: ["carat", "cts", "ct", "weight"],
-    color: ["color", "colour"],
-    clarity: ["clarity", "purity"],
-    pricePerCt: ["rate", "pricepercarat", "perct", "ppc"],
-    totalPrice: ["total", "amount", "price"],
-    reportNo: ["igi", "report", "certificate", "certno"],
+    ref: ["stockno", "stockid", "stock", "srno", "lot", "packet", "stoneno", "ref"],
+    shape: ["shape"],
+    carat: ["carat", "cts", "weight"],
+    color: ["color", "colour", "col"],
+    clarity: ["clarity", "purity", "clar"],
+    cut: ["cutgrade", "cut"],
+    polish: ["polish", "pol"],
+    symmetry: ["symmetry", "symm", "sym"],
+    fluorescence: ["fluorescence", "fluor", "flr"],
+    pricePerCt: ["rate", "pricepercarat", "perct", "ppc", "dollarct"],
+    totalPrice: ["totalamount", "totalprice", "netamount", "amount", "total", "value"],
+    reportNo: ["reportno", "certno", "certificateno", "igino", "report", "igi"],
+    location: ["location", "city", "itemloc"],
+    measurements: ["measurement", "meas"],
   };
+  const norm2 = (s: string) => norm(s);
   const suggested: Record<string, string> = {};
+  const used = new Set<string>();
   for (const field of STONE_FIELDS) {
     const cands = hints[field] ?? [norm(field)];
-    const match = columns.find((c) => cands.some((h) => norm(c).includes(h)));
-    if (match) suggested[field] = match;
+    // Prefer the most specific (longest) hint match; don't reuse a column already mapped.
+    let best: string | undefined;
+    for (const h of cands) {
+      const match = columns.find((c) => !used.has(c) && norm2(c).includes(h));
+      if (match) { best = match; break; }
+    }
+    if (best) { suggested[field] = best; used.add(best); }
   }
 
   return NextResponse.json({
