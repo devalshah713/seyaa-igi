@@ -210,27 +210,17 @@ export default function SearchFilters({ facets }: { facets: Facets }) {
           </div>
           <div className="card">
             <div className="chd"><h3>Location</h3><span className="note">{chosen("location").length ? `${chosen("location").length} selected` : "Any"}</span></div>
-            {facets.location.length > 0 && <div className="wrap" style={{ marginBottom: 12 }}>{facets.location.map((l) => chip("location", l))}</div>}
-            <span className="check"><span className="bx" />Exclude selected location(s)</span>
+            {facets.location.length > 0 && <div className="wrap">{facets.location.map((l) => chip("location", l))}</div>}
           </div>
         </div>
 
-        {/* Growth Type / Treatment */}
-        <div className="row2">
-          <div className="card">
-            <div className="chd"><h3>Growth Type</h3></div>
-            <div style={{ display: "flex", gap: 22, flexWrap: "wrap" }}>
-              {["CVD", "HPHT"].map((g) => (
-                <span key={g} className={`check ${chosen("growthType").includes(g) ? "on" : ""}`} onClick={() => toggle("growthType", g)}><span className="bx" />{g}</span>
-              ))}
-              <span className="check"><span className="bx" />Others</span>
-            </div>
-          </div>
-          <div className="card">
-            <div className="chd"><h3>Treatment</h3></div>
-            <div style={{ display: "flex", gap: 22, flexWrap: "wrap" }}>
-              <span className="check"><span className="bx" />As Grown</span><span className="check"><span className="bx" />Treated</span><span className="check"><span className="bx" />Unknown</span>
-            </div>
+        {/* Growth Type */}
+        <div className="card">
+          <div className="chd"><h3>Growth Type</h3></div>
+          <div style={{ display: "flex", gap: 22, flexWrap: "wrap" }}>
+            {["CVD", "HPHT"].map((g) => (
+              <span key={g} className={`check ${chosen("growthType").includes(g) ? "on" : ""}`} onClick={() => toggle("growthType", g)}><span className="bx" />{g}</span>
+            ))}
           </div>
         </div>
 
