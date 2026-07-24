@@ -9,3 +9,6 @@ dist/
 
 # build artifacts
 *.tsbuildinfo
+
+# local dev uploads
+.uploads/

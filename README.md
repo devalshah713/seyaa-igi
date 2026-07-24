@@ -59,17 +59,25 @@ Seeded logins (password `password123`): `admin@seyaasolitaire.com` (admin),
 | GET/POST/DELETE | `/api/cart` | Manage cart |
 | GET/POST | `/api/orders` | List orders · **Create Order ID** from cart → email admin, clear cart |
 | GET/POST | `/api/requests` | List / create Memo or Hold requests |
+| POST | `/api/uploads` | Multipart file upload (Aadhaar/GST/media) → Vercel Blob (dev: `.uploads/`) |
+| POST | `/api/admin/inventory/analyze` | Upload Excel/CSV → detected columns + **suggested mapping** + preview |
+| POST | `/api/admin/inventory/publish` | Excel + mapping → validate → **bulk upsert `Stone`s** |
+| GET | `/api/admin/customers` | KYC application queue (with documents) |
+| POST | `/api/admin/customers/[id]/decision` | Approve / reject a trade application |
+| GET | `/api/admin/requests` | Memo/Hold approval queue |
+| POST | `/api/admin/requests/[id]/decision` | Approve/decline → transitions stone to MEMO/HOLD |
 | POST | `/api/admin/orders/[id]/assign` | Admin assigns an order to a salesperson |
 
 Auth is a signed JWT in an httpOnly cookie (`src/lib/auth.ts`); role guards via `requireRole`.
+File storage uses Vercel Blob when `BLOB_READ_WRITE_TOKEN` is set, otherwise a local
+`.uploads/` dev fallback served (auth-gated) via `/api/uploads/[...path]`.
 
 ## Still to wire (next steps)
 
-- **File uploads** — Aadhaar/GST + stone media to object storage (S3 / Vercel Blob); the
-  request-access endpoint currently accepts pre-uploaded URLs.
-- **Excel stock upload** — parse `.xlsx` → column mapping → validate → bulk-create `Stone`s.
-- **Admin actions** — approve/decline KYC & memo/hold; memo return / hold expiry jobs.
 - **Front-end migration** — port `public/prototype.html` screens to Next.js pages calling the API.
+- **Set-password flow** — email a set/reset-password link on KYC approval (currently status only).
+- **Scheduled jobs** — memo-return + hold-expiry to release stones back to AVAILABLE.
+- **Private KYC storage** — move Aadhaar/GST to a private bucket / signed URLs (public-unguessable today).
 - **SMS OTP** (optional) for mobile verification.
 
 ### Open decisions
